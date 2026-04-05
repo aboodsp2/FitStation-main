@@ -130,9 +130,7 @@ class VerifyEmailPage extends StatelessWidget {
                   if (context.mounted) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomeScreens(),
-                      ),
+                      MaterialPageRoute(builder: (context) => WelcomeScreens()),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
