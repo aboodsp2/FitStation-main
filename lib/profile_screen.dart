@@ -13,8 +13,8 @@ class ProfileSection extends StatefulWidget {
 }
 
 class _ProfileSectionState extends State<ProfileSection> {
-  bool _editing  = false;
-  bool _saving   = false;
+  bool _editing = false;
+  bool _saving  = false;
 
   final _nameCtrl        = TextEditingController();
   final _ageCtrl         = TextEditingController();
@@ -24,21 +24,17 @@ class _ProfileSectionState extends State<ProfileSection> {
   String _gender = "Male";
   String _goal   = "Weight Loss";
 
-  // The URL of the saved photo (from Firestore)
-  String? _savedPhotoUrl;
-  // A newly picked local file (before saving)
-  File?   _pickedFile;
+  String? _savedPhotoUrl; // URL stored in Firestore
+  File?   _pickedFile;    // Locally picked file (not yet uploaded)
 
   @override
-  void initState() {
-    super.initState();
-    _loadFromFirestore();
-  }
+  void initState() { super.initState(); _load(); }
 
-  Future<void> _loadFromFirestore() async {
+  Future<void> _load() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users').doc(uid).get();
     if (!doc.exists || !mounted) return;
     final d = doc.data()!;
     setState(() {
@@ -61,34 +57,68 @@ class _ProfileSectionState extends State<ProfileSection> {
     }
   }
 
+  /// Upload to Firebase Storage and return the download URL.
+  /// Returns null if upload fails, so the save still completes without a photo.
+  Future<String?> _uploadPhoto(String uid) async {
+    if (_pickedFile == null) return _savedPhotoUrl;
+    try {
+      // Use users/{uid}/profile.jpg — matches typical Storage rules
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('users')
+          .child(uid)
+          .child('profile.jpg');
+
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      final task = await ref.putFile(_pickedFile!, metadata);
+      return await task.ref.getDownloadURL();
+    } on FirebaseException catch (e) {
+      // Surface a readable message without crashing
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Photo upload failed: ${e.message ?? e.code}\n"
+              "Check Firebase Storage rules."),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 5),
+        ));
+      }
+      // Return existing URL so the rest of the profile still saves
+      return _savedPhotoUrl;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Photo upload error: $e"),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+      return _savedPhotoUrl;
+    }
+  }
+
   Future<void> _save() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     setState(() => _saving = true);
 
     try {
-      // Upload photo if a new one was picked
-      String? newUrl = _savedPhotoUrl;
-      if (_pickedFile != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('profile_photos/$uid.jpg');
-        await ref.putFile(_pickedFile!);
-        newUrl = await ref.getDownloadURL();
-      }
+      final newUrl = await _uploadPhoto(uid);
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      final Map<String, dynamic> update = {
         'name':        _nameCtrl.text.trim(),
-        'age':         int.tryParse(_ageCtrl.text)        ?? 0,
-        'weight':      double.tryParse(_weightCtrl.text)  ?? 0.0,
-        'height':      double.tryParse(_heightCtrl.text)  ?? 0.0,
+        'age':         int.tryParse(_ageCtrl.text)       ?? 0,
+        'weight':      double.tryParse(_weightCtrl.text) ?? 0.0,
+        'height':      double.tryParse(_heightCtrl.text) ?? 0.0,
         'nationality': _nationalityCtrl.text.trim(),
         'gender':      _gender,
         'goal':        _goal,
-        if (newUrl != null) 'photoUrl': newUrl,
-      });
+      };
+      // Only write photoUrl if we actually have one
+      if (newUrl != null) update['photoUrl'] = newUrl;
 
-      // Commit new photo URL locally so header refreshes immediately
+      await FirebaseFirestore.instance
+          .collection('users').doc(uid).update(update);
+
+      if (!mounted) return;
       setState(() {
         _savedPhotoUrl = newUrl;
         _pickedFile    = null;
@@ -96,15 +126,15 @@ class _ProfileSectionState extends State<ProfileSection> {
         _saving        = false;
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Profile updated!"),
-            backgroundColor: Colors.green));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Profile updated!"),
+          backgroundColor: Colors.green));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _saving = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"),
+              backgroundColor: Colors.redAccent));
     }
   }
 
@@ -125,44 +155,58 @@ class _ProfileSectionState extends State<ProfileSection> {
     super.dispose();
   }
 
-  // Which image to show: picked file > saved url > placeholder
-  Widget _buildAvatar({double size = 100}) {
-    final radius = size / 2;
-    Widget child;
+  // ── Avatar widget ────────────────────────────────────────────────────────
+  Widget _avatar({double size = 100}) {
+    Widget photo;
     if (_pickedFile != null) {
-      child = Image.file(_pickedFile!, fit: BoxFit.cover,
+      photo = Image.file(_pickedFile!, fit: BoxFit.cover,
           width: size, height: size);
     } else if (_savedPhotoUrl != null) {
-      child = Image.network(_savedPhotoUrl!, fit: BoxFit.cover,
-          width: size, height: size,
-          errorBuilder: (_, __, ___) =>
-              Icon(Icons.person_rounded, color: AppTheme.primary, size: size * 0.5));
+      photo = Image.network(
+        _savedPhotoUrl!,
+        fit: BoxFit.cover, width: size, height: size,
+        loadingBuilder: (_, child, progress) => progress == null
+            ? child
+            : Center(child: CircularProgressIndicator(
+                value: progress.expectedTotalBytes != null
+                    ? progress.cumulativeBytesLoaded /
+                        progress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                color: AppTheme.accent)),
+        errorBuilder: (_, __, ___) =>
+            Icon(Icons.person_rounded, color: AppTheme.primary, size: size * 0.5),
+      );
     } else {
-      child = Icon(Icons.person_rounded, color: AppTheme.primary, size: size * 0.5);
+      photo = Icon(Icons.person_rounded,
+          color: AppTheme.primary, size: size * 0.5);
     }
 
     return Stack(children: [
-      Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppTheme.accent.withOpacity(0.15),
-          border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 2),
-          boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.2),
-              blurRadius: 20, offset: const Offset(0, 6))],
+      GestureDetector(
+        onTap: _editing ? _pickImage : null,
+        child: Container(
+          width: size, height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.accent.withOpacity(0.12),
+            border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 2),
+            boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.18),
+                blurRadius: 22, offset: const Offset(0, 7))],
+          ),
+          child: ClipOval(child: photo),
         ),
-        child: ClipOval(child: child),
       ),
       if (_editing)
         Positioned(bottom: 0, right: 0,
           child: GestureDetector(
             onTap: _pickImage,
             child: Container(
-              width: 30, height: 30,
+              width: 32, height: 32,
               decoration: const BoxDecoration(
                   color: AppTheme.primary, shape: BoxShape.circle),
               child: const Icon(Icons.camera_alt_rounded,
-                  color: Colors.white, size: 16),
+                  color: Colors.white, size: 17),
             ),
           )),
     ]);
@@ -175,7 +219,7 @@ class _ProfileSectionState extends State<ProfileSection> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       children: [
-        // ── Top bar ─────────────────────────────────────────────────────────
+        // ── Top bar ──────────────────────────────────────────────────────
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text("My Profile", style: AppTheme.heading.copyWith(fontSize: 24)),
           GestureDetector(
@@ -185,11 +229,13 @@ class _ProfileSectionState extends State<ProfileSection> {
                     child: CircularProgressIndicator(strokeWidth: 2,
                         color: AppTheme.primary))
                 : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 9),
                     decoration: BoxDecoration(
                       color: _editing ? AppTheme.primary : AppTheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.1),
                           blurRadius: 8, offset: const Offset(0, 3))],
                     ),
                     child: Text(_editing ? "Save" : "Edit",
@@ -199,51 +245,57 @@ class _ProfileSectionState extends State<ProfileSection> {
                   ),
           ),
         ]),
-        const SizedBox(height: 28),
+        const SizedBox(height: 30),
 
-        // ── Avatar ───────────────────────────────────────────────────────────
-        Center(child: _buildAvatar()),
+        // ── Avatar ───────────────────────────────────────────────────────
+        Center(child: _avatar()),
         const SizedBox(height: 12),
         if (!_editing) ...[
-          Center(child: Text(_nameCtrl.text.isNotEmpty ? _nameCtrl.text : "User",
-              style: AppTheme.subheading.copyWith(fontSize: 18))),
-          Center(child: Text(email, style: AppTheme.body.copyWith(fontSize: 13))),
+          Center(child: Text(
+              _nameCtrl.text.isNotEmpty ? _nameCtrl.text : "User",
+              style: AppTheme.subheading.copyWith(fontSize: 19))),
+          const SizedBox(height: 4),
+          Center(child: Text(email,
+              style: AppTheme.body.copyWith(fontSize: 13))),
         ],
         const SizedBox(height: 24),
 
-        // ── Info card ────────────────────────────────────────────────────────
+        // ── Info card ────────────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.all(20),
           decoration: AppTheme.card(radius: 22),
           child: Column(children: [
-            _row(Icons.email_outlined, "Email", email, readOnly: true),
+            _row(Icons.email_outlined,       "Email",       email, readOnly: true),
             _div(),
             _editing
-                ? _editField(Icons.person_outline_rounded, "Full Name", _nameCtrl, TextInputType.name)
+                ? _editField(Icons.person_outline_rounded,
+                    "Full Name", _nameCtrl, TextInputType.name)
                 : _row(Icons.person_outline_rounded, "Name", _nameCtrl.text),
             _div(),
             _editing
                 ? GestureDetector(
                     onTap: _pickNationality,
                     child: _row(Icons.flag_outlined, "Nationality",
-                        _nationalityCtrl.text.isEmpty ? "Tap to select" : _nationalityCtrl.text,
+                        _nationalityCtrl.text.isEmpty
+                            ? "Tap to select"
+                            : _nationalityCtrl.text,
                         trailing: const Icon(Icons.keyboard_arrow_down_rounded,
                             color: AppTheme.muted, size: 18)))
                 : _row(Icons.flag_outlined, "Nationality",
-                    _nationalityCtrl.text.isEmpty ? "Not set" : _nationalityCtrl.text),
+                    _nationalityCtrl.text.isEmpty
+                        ? "Not set"
+                        : _nationalityCtrl.text),
             _div(),
-            _editing
-                ? _genderToggle()
+            _editing ? _genderToggle()
                 : _row(Icons.wc_rounded, "Gender", _gender),
             _div(),
-            _editing
-                ? _goalDropdown()
+            _editing ? _goalDropdown()
                 : _row(Icons.track_changes_rounded, "Goal", _goal),
           ]),
         ),
         const SizedBox(height: 18),
 
-        // ── Stats ─────────────────────────────────────────────────────────────
+        // ── Stats ─────────────────────────────────────────────────────────
         Row(children: [
           _stat("Age",    _ageCtrl,    "yrs"),
           const SizedBox(width: 12),
@@ -251,7 +303,6 @@ class _ProfileSectionState extends State<ProfileSection> {
           const SizedBox(width: 12),
           _stat("Height", _heightCtrl, "cm"),
         ]),
-
         const SizedBox(height: 100),
       ],
     );
@@ -270,10 +321,12 @@ class _ProfileSectionState extends State<ProfileSection> {
         child: Icon(icon, color: AppTheme.primary, size: 18),
       ),
       const SizedBox(width: 14),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
         Text(label, style: AppTheme.label),
         Text(value, style: AppTheme.subheading.copyWith(
-            fontSize: 14, color: readOnly ? AppTheme.muted : AppTheme.dark)),
+            fontSize: 14,
+            color: readOnly ? AppTheme.muted : AppTheme.dark)),
       ])),
       if (trailing != null) trailing,
     ]);
@@ -291,14 +344,12 @@ class _ProfileSectionState extends State<ProfileSection> {
       ),
       const SizedBox(width: 14),
       Expanded(child: TextField(
-        controller: ctrl,
-        keyboardType: type,
+        controller: ctrl, keyboardType: type,
         style: AppTheme.subheading.copyWith(fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: AppTheme.label,
-          isDense: true,
-          border: InputBorder.none,
+          isDense: true, border: InputBorder.none,
         ),
       )),
     ]);
@@ -307,7 +358,8 @@ class _ProfileSectionState extends State<ProfileSection> {
   Widget _genderToggle() => Row(children: ["Male", "Female"].map((g) {
     final sel = _gender == g;
     return Expanded(child: Padding(
-      padding: EdgeInsets.only(right: g == "Male" ? 6 : 0, left: g == "Female" ? 6 : 0),
+      padding: EdgeInsets.only(
+          right: g == "Male" ? 6 : 0, left: g == "Female" ? 6 : 0),
       child: GestureDetector(
         onTap: () => setState(() => _gender = g),
         child: AnimatedContainer(
@@ -316,7 +368,8 @@ class _ProfileSectionState extends State<ProfileSection> {
           decoration: BoxDecoration(
             color: sel ? AppTheme.primary : AppTheme.background,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: sel ? AppTheme.primary : AppTheme.divider),
+            border: Border.all(
+                color: sel ? AppTheme.primary : AppTheme.divider),
           ),
           child: Center(child: Text(g, style: TextStyle(
               color: sel ? Colors.white : AppTheme.muted,
@@ -328,8 +381,7 @@ class _ProfileSectionState extends State<ProfileSection> {
 
   Widget _goalDropdown() => DropdownButtonHideUnderline(
     child: DropdownButton<String>(
-      value: _goal,
-      isExpanded: true,
+      value: _goal, isExpanded: true,
       style: AppTheme.subheading.copyWith(fontSize: 14),
       items: ["Weight Loss", "Muscle Gain", "Maintenance"]
           .map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
@@ -351,13 +403,12 @@ class _ProfileSectionState extends State<ProfileSection> {
                   textAlign: TextAlign.center,
                   style: AppTheme.subheading.copyWith(fontSize: 16),
                   decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    suffixText: unit,
-                    suffixStyle: AppTheme.label,
+                    isDense: true, border: InputBorder.none,
+                    suffixText: unit, suffixStyle: AppTheme.label,
                   ),
                 )
-              : Row(mainAxisAlignment: MainAxisAlignment.center,
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
@@ -369,7 +420,7 @@ class _ProfileSectionState extends State<ProfileSection> {
       ));
 }
 
-// ── Re-usable Nationality Picker (same as in profile_form_screen) ────────────
+// ── Nationality Bottom-Sheet ──────────────────────────────────────────────────
 class _NationalityPicker extends StatefulWidget {
   const _NationalityPicker();
   @override State<_NationalityPicker> createState() => _NationalityPickerState();
@@ -382,19 +433,15 @@ class _NationalityPickerState extends State<_NationalityPicker> {
   void _filter(String q) => setState(() {
     _list = q.isEmpty
         ? List.from(kNationalities)
-        : kNationalities
-            .where((n) => n.toLowerCase().contains(q.toLowerCase()))
-            .toList();
+        : kNationalities.where((n) =>
+            n.toLowerCase().contains(q.toLowerCase())).toList();
   });
 
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  @override void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: 0.85,
-    maxChildSize: 0.95,
-    minChildSize: 0.5,
+    initialChildSize: 0.85, maxChildSize: 0.95, minChildSize: 0.5,
     builder: (_, scroll) => Container(
       decoration: const BoxDecoration(
         color: AppTheme.background,
@@ -409,8 +456,7 @@ class _NationalityPickerState extends State<_NationalityPicker> {
         Text("Select Nationality", style: AppTheme.subheading),
         const SizedBox(height: 14),
         TextField(
-          controller: _ctrl,
-          onChanged: _filter,
+          controller: _ctrl, onChanged: _filter,
           style: TextStyle(color: AppTheme.dark, fontSize: 14),
           decoration: AppTheme.inputDecoration(
               "Search nationality...", Icons.search_rounded),

@@ -401,15 +401,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
       await userCredential.user?.sendEmailVerification();
       widget.onVerificationSent(_nameController.text.trim());
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-            'name': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          });
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(
         context,
