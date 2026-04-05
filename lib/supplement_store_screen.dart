@@ -1,205 +1,198 @@
 import 'package:flutter/material.dart';
+import 'app_theme.dart';
 import 'dashboard_screen.dart';
+import 'cart_screen.dart';
 
 class SupplementStoreScreen extends StatefulWidget {
   const SupplementStoreScreen({super.key});
-
-  @override
-  State<SupplementStoreScreen> createState() => _SupplementStoreScreenState();
+  @override State<SupplementStoreScreen> createState() => _SupplementStoreScreenState();
 }
 
 class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
-  static const Color primaryOrange = Color(0xFFF37E33);
-  static const Color darkText = Color(0xFF1A1A1A);
-  static const Color background = Color(0xFFF8F4EF);
+  String _cat = "All";
+  int _cartCount = 0;
 
-  String _selectedCategory = "All";
+  final _cats = ["All", "Protein", "Pre-Workout", "Vitamins",
+      "Recovery", "Weight Loss", "Creatine"];
 
-  final List<String> _categories = ["All", "Protein", "Pre-Workout", "Vitamins", "Recovery", "Weight Loss", "Creatine"];
-
-  final List<Map<String, dynamic>> _products = [
-    {"name": "Whey Protein Gold", "category": "Protein", "price": 49.99, "unit": "2.27kg", "icon": Icons.sports_bar_rounded, "rating": 4.9, "color": const Color(0xFF1A1A2E), "accent": const Color(0xFF4361EE)},
-    {"name": "Casein Night Protein", "category": "Protein", "price": 39.99, "unit": "907g", "icon": Icons.bedtime_rounded, "rating": 4.7, "color": const Color(0xFF0F3460), "accent": const Color(0xFF00B4D8)},
-    {"name": "Pre-Workout Extreme", "category": "Pre-Workout", "price": 34.99, "unit": "300g", "icon": Icons.bolt_rounded, "rating": 4.8, "color": const Color(0xFF7B2D00), "accent": const Color(0xFFFF8C42)},
-    {"name": "Stim-Free Pre", "category": "Pre-Workout", "price": 29.99, "unit": "250g", "icon": Icons.local_fire_department_rounded, "rating": 4.6, "color": const Color(0xFF4A0E8F), "accent": const Color(0xFFC77DFF)},
-    {"name": "Creatine Monohydrate", "category": "Creatine", "price": 19.99, "unit": "500g", "icon": Icons.science_rounded, "rating": 5.0, "color": const Color(0xFF1B4332), "accent": const Color(0xFF52B788)},
-    {"name": "Multivitamin Pro", "category": "Vitamins", "price": 24.99, "unit": "90 caps", "icon": Icons.eco_rounded, "rating": 4.8, "color": const Color(0xFF003049), "accent": const Color(0xFFFCBF49)},
-    {"name": "Omega-3 Fish Oil", "category": "Vitamins", "price": 22.99, "unit": "60 softgels", "icon": Icons.water_drop_rounded, "rating": 4.7, "color": const Color(0xFF0D3B66), "accent": const Color(0xFF60D0F0)},
-    {"name": "BCAAs Recovery", "category": "Recovery", "price": 27.99, "unit": "400g", "icon": Icons.refresh_rounded, "rating": 4.6, "color": const Color(0xFF3D2B1F), "accent": const Color(0xFFF4A261)},
-    {"name": "Glutamine Powder", "category": "Recovery", "price": 18.99, "unit": "300g", "icon": Icons.healing_rounded, "rating": 4.5, "color": const Color(0xFF1A3A1A), "accent": const Color(0xFF76C893)},
-    {"name": "Fat Burner Pro", "category": "Weight Loss", "price": 36.99, "unit": "60 caps", "icon": Icons.whatshot_rounded, "rating": 4.4, "color": const Color(0xFF5C1A1A), "accent": const Color(0xFFE63946)},
-    {"name": "L-Carnitine Liquid", "category": "Weight Loss", "price": 26.99, "unit": "500ml", "icon": Icons.directions_run_rounded, "rating": 4.6, "color": const Color(0xFF2D1A3D), "accent": const Color(0xFFB07FED)},
-    {"name": "Mass Gainer 3000", "category": "Protein", "price": 59.99, "unit": "3kg", "icon": Icons.trending_up_rounded, "rating": 4.5, "color": const Color(0xFF1A2A3D), "accent": const Color(0xFF64B5F6)},
+  final _products = const [
+    {"name": "Whey Protein Gold",    "cat": "Protein",     "price": 49.99, "unit": "2.27 kg", "icon": Icons.sports_bar_rounded,          "c1": Color(0xFF3B2314), "c2": Color(0xFF7B5035)},
+    {"name": "Casein Night Protein", "cat": "Protein",     "price": 39.99, "unit": "907 g",   "icon": Icons.bedtime_rounded,             "c1": Color(0xFF1C2A1E), "c2": Color(0xFF3A5C3E)},
+    {"name": "Pre-Workout Extreme",  "cat": "Pre-Workout", "price": 34.99, "unit": "300 g",   "icon": Icons.bolt_rounded,                "c1": Color(0xFF3B1414), "c2": Color(0xFF7B3030)},
+    {"name": "Stim-Free Pre",        "cat": "Pre-Workout", "price": 29.99, "unit": "250 g",   "icon": Icons.local_fire_department_rounded,"c1": Color(0xFF1A1A2A), "c2": Color(0xFF3D3460)},
+    {"name": "Creatine Monohydrate", "cat": "Creatine",    "price": 19.99, "unit": "500 g",   "icon": Icons.science_rounded,             "c1": Color(0xFF1C2A1E), "c2": Color(0xFF2A4032)},
+    {"name": "Multivitamin Pro",     "cat": "Vitamins",    "price": 24.99, "unit": "90 caps", "icon": Icons.eco_rounded,                 "c1": Color(0xFF2A200E), "c2": Color(0xFF5C4822)},
+    {"name": "Omega-3 Fish Oil",     "cat": "Vitamins",    "price": 22.99, "unit": "60 soft", "icon": Icons.water_drop_rounded,          "c1": Color(0xFF0E1F2A), "c2": Color(0xFF1A3D52)},
+    {"name": "BCAAs Recovery",       "cat": "Recovery",    "price": 27.99, "unit": "400 g",   "icon": Icons.refresh_rounded,             "c1": Color(0xFF2A1C0E), "c2": Color(0xFF6B4C2A)},
+    {"name": "Glutamine Powder",     "cat": "Recovery",    "price": 18.99, "unit": "300 g",   "icon": Icons.healing_rounded,             "c1": Color(0xFF1A2A1A), "c2": Color(0xFF3A5A3A)},
+    {"name": "Fat Burner Pro",       "cat": "Weight Loss", "price": 36.99, "unit": "60 caps", "icon": Icons.whatshot_rounded,            "c1": Color(0xFF3B1010), "c2": Color(0xFF7B2020)},
+    {"name": "L-Carnitine Liquid",   "cat": "Weight Loss", "price": 26.99, "unit": "500 ml",  "icon": Icons.directions_run_rounded,      "c1": Color(0xFF2D1A3D), "c2": Color(0xFF5A3460)},
+    {"name": "Mass Gainer 3000",     "cat": "Protein",     "price": 59.99, "unit": "3 kg",    "icon": Icons.trending_up_rounded,         "c1": Color(0xFF1A2A3D), "c2": Color(0xFF2A4060)},
   ];
 
-  List<Map<String, dynamic>> get _filtered =>
-      _selectedCategory == "All" ? _products : _products.where((p) => p["category"] == _selectedCategory).toList();
+  List<Map<String, dynamic>> get _filtered => _cat == "All"
+      ? List.from(_products)
+      : _products.where((p) => p["cat"] == _cat).toList();
 
-  void _addToCart(Map<String, dynamic> product) {
+  @override
+  void initState() {
+    super.initState();
+    CartManager().addListener(_onCart);
+    _cartCount = CartManager().count;
+  }
+  @override
+  void dispose() { CartManager().removeListener(_onCart); super.dispose(); }
+  void _onCart() { if (mounted) setState(() => _cartCount = CartManager().count); }
+
+  void _addToCart(Map<String, dynamic> p) {
     CartManager().addItem(CartItem(
-      id: product["name"] as String,
-      name: product["name"] as String,
-      price: product["price"] as double,
+      id:       p["name"] as String,
+      name:     p["name"] as String,
+      price:    p["price"] as double,
       quantity: 1,
-      icon: product["icon"] as IconData,
+      icon:     p["icon"] as IconData,
     ));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("${product["name"]} added to cart!"),
-        backgroundColor: primaryOrange,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text("${p["name"]} added to cart"),
+      backgroundColor: AppTheme.primary,
+      duration: const Duration(seconds: 1),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: background,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: darkText),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.dark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("Supplement Store", style: TextStyle(color: darkText, fontWeight: FontWeight.bold)),
+        title: Text("Supplement Store",
+            style: AppTheme.subheading.copyWith(fontSize: 18)),
+        // ── Cart icon → goes directly to CartScreen ──
         actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined, color: darkText),
-                onPressed: () => Navigator.pop(context), // go back to see cart tab
-              ),
-            ],
-          ),
+          Stack(children: [
+            IconButton(
+              icon: Icon(Icons.shopping_cart_outlined, color: AppTheme.primary),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const CartScreen())),
+            ),
+            if (_cartCount > 0)
+              Positioned(top: 6, right: 6,
+                child: Container(
+                  width: 17, height: 17,
+                  decoration: const BoxDecoration(
+                      color: AppTheme.primary, shape: BoxShape.circle),
+                  child: Center(child: Text(
+                    _cartCount > 9 ? "9+" : "$_cartCount",
+                    style: const TextStyle(color: Colors.white,
+                        fontSize: 9, fontWeight: FontWeight.bold),
+                  )),
+                )),
+          ]),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          // ── Category Filter ──
-          SizedBox(
-            height: 44,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final cat = _categories[index];
-                final isSelected = cat == _selectedCategory;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedCategory = cat),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? primaryOrange : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
-                    ),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black54,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Product Grid ──
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.78,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-              ),
-              itemCount: _filtered.length,
-              itemBuilder: (context, index) {
-                final p = _filtered[index];
-                return Container(
+      body: Column(children: [
+        // ── category chips ──
+        SizedBox(height: 44,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _cats.length,
+            itemBuilder: (_, i) {
+              final sel = _cats[i] == _cat;
+              return GestureDetector(
+                onTap: () => setState(() => _cat = _cats[i]),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
                   decoration: BoxDecoration(
-                    color: p["color"] as Color,
+                    color: sel ? AppTheme.primary : AppTheme.surface,
                     borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (p["accent"] as Color).withOpacity(0.2),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                    border: Border.all(
+                        color: sel ? AppTheme.primary : AppTheme.divider),
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: (p["accent"] as Color).withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(p["icon"] as IconData, color: p["accent"] as Color, size: 22),
-                          ),
-                          Row(
-                            children: [
-                              Icon(Icons.star_rounded, size: 14, color: (p["accent"] as Color)),
-                              const SizedBox(width: 3),
-                              Text("${p["rating"]}", style: TextStyle(color: (p["accent"] as Color), fontSize: 11, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Text(
-                        p["name"] as String,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, height: 1.2),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(p["unit"] as String, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "\$${(p["price"] as double).toStringAsFixed(2)}",
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          GestureDetector(
-                            onTap: () => _addToCart(p),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: (p["accent"] as Color).withOpacity(0.25),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(Icons.add_shopping_cart_rounded, color: p["accent"] as Color, size: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                  child: Center(child: Text(_cats[i],
+                    style: TextStyle(
+                      color: sel ? Colors.white : AppTheme.muted,
+                      fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                  )),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 14),
+
+        // ── product grid ──
+        Expanded(child: GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, childAspectRatio: 0.78,
+            crossAxisSpacing: 14, mainAxisSpacing: 14,
+          ),
+          itemCount: _filtered.length,
+          itemBuilder: (_, i) {
+            final p = _filtered[i];
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [p["c1"] as Color, p["c2"] as Color],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [BoxShadow(color: (p["c1"] as Color).withOpacity(0.3),
+                    blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(width: 42, height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(p["icon"] as IconData,
+                      color: AppTheme.accent, size: 22),
+                ),
+                const Spacer(),
+                Text(p["name"] as String,
+                    style: const TextStyle(color: Colors.white,
+                        fontWeight: FontWeight.bold, fontSize: 13, height: 1.2),
+                    maxLines: 2),
+                const SizedBox(height: 3),
+                Text(p["unit"] as String,
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                const SizedBox(height: 10),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text("\$${(p["price"] as double).toStringAsFixed(2)}",
+                      style: const TextStyle(color: Colors.white,
+                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  GestureDetector(
+                    onTap: () => _addToCart(p),
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent.withOpacity(0.22),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add_shopping_cart_rounded,
+                          color: AppTheme.accent, size: 16),
+                    ),
+                  ),
+                ]),
+              ]),
+            );
+          },
+        )),
+      ]),
     );
   }
 }

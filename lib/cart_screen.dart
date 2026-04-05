@@ -177,8 +177,10 @@ class _CartScreenState extends State<CartScreen> {
                           backgroundColor: primaryOrange,
                         ),
                         onPressed: () {
-                          CartManager().items.clear();
-                          CartManager().notify();
+                          final ids = CartManager().items
+                              .map((i) => i.id)
+                              .toList();
+                          for (final id in ids) CartManager().removeItem(id);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -313,10 +315,3 @@ class _CartItemTileState extends State<_CartItemTile> {
     );
   }
 }
-
-// Expose _notify for external use
-extension CartManagerExt on CartManager {
-  void notify() => _notify();
-}
-
-void _notify() {}
