@@ -158,10 +158,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildMuscleCard(index),
-                  ),
+                  (context, index) => _buildMuscleCard(index),
                   childCount: _muscleGroups.length,
                 ),
               ),
