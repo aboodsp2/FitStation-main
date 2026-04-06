@@ -80,8 +80,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
-    _scale = Tween<double>(begin: 0.95, end: 1.05).animate(
-        CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
+    _scale = Tween<double>(
+      begin: 0.95,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
   }
 
   @override
@@ -102,11 +104,11 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
           .collection('users')
           .doc(updated!.uid)
           .set({
-        'name':      widget.fullName,
-        'email':     updated.email,
-        'createdAt': FieldValue.serverTimestamp(),
-        'isVerified': true,
-      });
+            'name': widget.fullName,
+            'email': updated.email,
+            'createdAt': FieldValue.serverTimestamp(),
+            'isVerified': true,
+          });
 
       if (mounted) {
         Navigator.pushReplacement(
@@ -119,11 +121,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Email not verified yet. Please check your inbox."),
+            content: const Text(
+              "Email not verified yet. Please check your inbox.",
+            ),
             backgroundColor: AppTheme.primary.withOpacity(0.9),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         );
       }
@@ -141,7 +146,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             backgroundColor: Colors.green.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         );
       }
@@ -153,7 +159,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             backgroundColor: AppTheme.primaryLight,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         );
       }
@@ -163,8 +170,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
 
   @override
   Widget build(BuildContext context) {
-    final email =
-        FirebaseAuth.instance.currentUser?.email ?? 'your email';
+    final email = FirebaseAuth.instance.currentUser?.email ?? 'your email';
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -182,10 +188,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
                     widget.onBackToLogin();
                   },
                   child: Container(
-                    width: 42, height: 42,
+                    width: 42,
+                    height: 42,
                     decoration: AppTheme.card(radius: 14),
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: AppTheme.primary, size: 18),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),
@@ -197,7 +207,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             ScaleTransition(
               scale: _scale,
               child: Container(
-                width: 110, height: 110,
+                width: 110,
+                height: 110,
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
                   shape: BoxShape.circle,
@@ -209,17 +220,24 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
                     ),
                   ],
                 ),
-                child: const Icon(Icons.mark_email_unread_outlined,
-                    color: Colors.white, size: 50),
+                child: const Icon(
+                  Icons.mark_email_unread_outlined,
+                  color: Colors.white,
+                  size: 50,
+                ),
               ),
             ),
 
             const SizedBox(height: 36),
 
             // ── title ────────────────────────────────────────────────────
-            Text("Verify Your Email",
-                style: AppTheme.heading.copyWith(
-                    fontSize: 28, letterSpacing: 0.4)),
+            Text(
+              "Verify Your Email",
+              style: AppTheme.heading.copyWith(
+                fontSize: 28,
+                letterSpacing: 0.4,
+              ),
+            ),
 
             const SizedBox(height: 14),
 
@@ -235,19 +253,22 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             const SizedBox(height: 8),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 36),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
                 color: AppTheme.accent.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: AppTheme.accent.withOpacity(0.3), width: 1),
+                  color: AppTheme.accent.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: Text(
                 email,
                 textAlign: TextAlign.center,
                 style: AppTheme.subheading.copyWith(
-                    fontSize: 14, color: AppTheme.primary),
+                  fontSize: 14,
+                  color: AppTheme.primary,
+                ),
               ),
             ),
 
@@ -256,16 +277,24 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             // ── step hints ───────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 36),
-              child: Column(children: [
-                _stepHint(Icons.inbox_rounded,
-                    "Check your inbox (and spam folder)"),
-                const SizedBox(height: 8),
-                _stepHint(Icons.touch_app_rounded,
-                    "Tap the link in the email"),
-                const SizedBox(height: 8),
-                _stepHint(Icons.check_circle_outline_rounded,
-                    "Come back and press the button below"),
-              ]),
+              child: Column(
+                children: [
+                  _stepHint(
+                    Icons.inbox_rounded,
+                    "Check your inbox (and spam folder)",
+                  ),
+                  const SizedBox(height: 8),
+                  _stepHint(
+                    Icons.touch_app_rounded,
+                    "Tap the link in the email",
+                  ),
+                  const SizedBox(height: 8),
+                  _stepHint(
+                    Icons.check_circle_outline_rounded,
+                    "Come back and press the button below",
+                  ),
+                ],
+              ),
             ),
 
             const Spacer(),
@@ -280,23 +309,31 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
                   onPressed: _loading ? null : _verify,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    disabledBackgroundColor:
-                        AppTheme.primary.withOpacity(0.6),
+                    disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18)),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                     elevation: 6,
                     shadowColor: AppTheme.primary.withOpacity(0.4),
                   ),
                   child: _loading
-                      ? const SizedBox(width: 22, height: 22,
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: Colors.white))
-                      : const Text("I'VE VERIFIED MY EMAIL",
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "I'VE VERIFIED MY EMAIL",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              letterSpacing: 0.8)),
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -307,15 +344,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             TextButton(
               onPressed: _resending ? null : _resend,
               child: _resending
-                  ? SizedBox(width: 18, height: 18,
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppTheme.muted))
+                        strokeWidth: 2,
+                        color: AppTheme.muted,
+                      ),
+                    )
                   : Text(
                       "Didn't receive it? Resend Email",
                       style: AppTheme.body.copyWith(
-                          color: AppTheme.accent,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppTheme.accent),
+                        color: AppTheme.accent,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppTheme.accent,
+                      ),
                     ),
             ),
 
@@ -326,19 +369,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
     );
   }
 
-  Widget _stepHint(IconData icon, String text) => Row(children: [
-    Container(
-      width: 32, height: 32,
-      decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
+  Widget _stepHint(IconData icon, String text) => Row(
+    children: [
+      Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppTheme.accent.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: AppTheme.primary, size: 16),
       ),
-      child: Icon(icon, color: AppTheme.primary, size: 16),
-    ),
-    const SizedBox(width: 12),
-    Expanded(child: Text(text,
-        style: AppTheme.body.copyWith(fontSize: 13))),
-  ]);
+      const SizedBox(width: 12),
+      Expanded(child: Text(text, style: AppTheme.body.copyWith(fontSize: 13))),
+    ],
+  );
 }
 
 // ─── INTRO SCREEN ────────────────────────────────────────────────────────────
@@ -366,37 +411,58 @@ class _IntroPageState extends State<IntroPage> {
   }
 
   @override
-  void dispose() { _controller.dispose(); super.dispose(); }
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      SizedBox.expand(
-        child: _controller.value.isInitialized
-            ? FittedBox(fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller)))
-            : Container(color: Colors.black),
-      ),
-      Container(color: Colors.black26),
-      Column(children: [
-        const SizedBox(height: 60),
-        _LogoHeader(),
-        const Spacer(),
-        const Text("LET'S MOVE",
-            style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900,
-                color: Colors.white)),
-        const Text("Fitness and wellness for\nyou anytime, anywhere.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 16)),
-        const SizedBox(height: 30),
-        _Button(label: "GET STARTED", color: Colors.white,
-            textColor: Colors.black, onTap: widget.onGetStarted),
-        const SizedBox(height: 60),
-      ]),
-    ]);
+    return Stack(
+      children: [
+        SizedBox.expand(
+          child: _controller.value.isInitialized
+              ? FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _controller.value.size.width,
+                    height: _controller.value.size.height,
+                    child: VideoPlayer(_controller),
+                  ),
+                )
+              : Container(color: Colors.black),
+        ),
+        Container(color: Colors.black26),
+        Column(
+          children: [
+            const SizedBox(height: 60),
+            _LogoHeader(),
+            const Spacer(),
+            const Text(
+              "LET'S MOVE",
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+            const Text(
+              "Fitness and wellness for\nyou anytime, anywhere.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            const SizedBox(height: 30),
+            _Button(
+              label: "GET STARTED",
+              color: Colors.white,
+              textColor: Colors.black,
+              onTap: widget.onGetStarted,
+            ),
+            const SizedBox(height: 60),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -404,11 +470,12 @@ class _IntroPageState extends State<IntroPage> {
 class SignInPage extends StatefulWidget {
   final VoidCallback onSignUpTap;
   const SignInPage({super.key, required this.onSignUpTap});
-  @override State<SignInPage> createState() => _SignInPageState();
+  @override
+  State<SignInPage> createState() => _SignInPageState();
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _emailCtrl    = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
   Future<void> _login() async {
@@ -417,11 +484,15 @@ class _SignInPageState extends State<SignInPage> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text.trim(),
       );
-      if (mounted) Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()));
+      if (mounted)
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Login Failed")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? "Login Failed")));
     }
   }
 
@@ -431,35 +502,64 @@ class _SignInPageState extends State<SignInPage> {
       image: 'assets/Sign_in.jpg',
       child: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 20),
-        child: Column(children: [
-          const SizedBox(height: 60),
-          _LogoHeader(),
-          const SizedBox(height: 80),
-          const Text("LOG IN",
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 20),
-          _Input(icon: Icons.email_outlined,  hint: "Email",    controller: _emailCtrl),
-          _Input(icon: Icons.lock_outline,    hint: "Password", controller: _passwordCtrl, isPass: true),
-          const SizedBox(height: 30),
-          _Button(label: "LOG IN", color: Colors.black,
-              textColor: Colors.white, onTap: _login),
-          const SizedBox(height: 15),
-          GestureDetector(
-            onTap: () => Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (_) => const DashboardScreen())),
-            child: const Text("Continue as Guest",
-                style: TextStyle(color: Colors.white, fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline)),
-          ),
-          const SizedBox(height: 20),
-          TextButton(
-            onPressed: widget.onSignUpTap,
-            child: const Text("Don't have an account? SIGN UP",
-                style: TextStyle(color: Colors.white70)),
-          ),
-        ]),
+        child: Column(
+          children: [
+            const SizedBox(height: 60),
+            _LogoHeader(),
+            const SizedBox(height: 80),
+            const Text(
+              "LOG IN",
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _Input(
+              icon: Icons.email_outlined,
+              hint: "Email",
+              controller: _emailCtrl,
+            ),
+            _Input(
+              icon: Icons.lock_outline,
+              hint: "Password",
+              controller: _passwordCtrl,
+              isPass: true,
+            ),
+            const SizedBox(height: 30),
+            _Button(
+              label: "LOG IN",
+              color: Colors.black,
+              textColor: Colors.white,
+              onTap: _login,
+            ),
+            const SizedBox(height: 15),
+            GestureDetector(
+              onTap: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              ),
+              child: const Text(
+                "Continue as Guest",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: widget.onSignUpTap,
+              child: const Text(
+                "Don't have an account? SIGN UP",
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -469,21 +569,27 @@ class _SignInPageState extends State<SignInPage> {
 class SignUpPage extends StatefulWidget {
   final VoidCallback onLoginTap;
   final Function(String) onVerificationSent;
-  const SignUpPage({super.key, required this.onLoginTap,
-      required this.onVerificationSent});
-  @override State<SignUpPage> createState() => _SignUpPageState();
+  const SignUpPage({
+    super.key,
+    required this.onLoginTap,
+    required this.onVerificationSent,
+  });
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final _emailCtrl    = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _nameCtrl     = TextEditingController();
+  final _nameCtrl = TextEditingController();
 
   Future<void> _signUp() async {
-    if (_emailCtrl.text.isEmpty || _passwordCtrl.text.isEmpty ||
+    if (_emailCtrl.text.isEmpty ||
+        _passwordCtrl.text.isEmpty ||
         _nameCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill all fields")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
     try {
@@ -493,15 +599,10 @@ class _SignUpPageState extends State<SignUpPage> {
       );
       await cred.user?.sendEmailVerification();
       widget.onVerificationSent(_nameCtrl.text.trim());
-      await FirebaseFirestore.instance
-          .collection('users').doc(cred.user!.uid).set({
-        'name':      _nameCtrl.text.trim(),
-        'email':     _emailCtrl.text.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
-      });
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Sign Up Failed")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? "Sign Up Failed")));
     } catch (e) {
       debugPrint("Firestore Error: $e");
     }
@@ -511,30 +612,66 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return _AuthBg(
       image: 'assets/Sign_up.jpg',
-      child: Stack(children: [
-        SingleChildScrollView(child: Column(children: [
-          const SizedBox(height: 60),
-          _LogoHeader(),
-          const SizedBox(height: 80),
-          const Text("SIGN UP",
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 20),
-          _Input(icon: Icons.person_outline, hint: "Full Name", controller: _nameCtrl),
-          _Input(icon: Icons.email_outlined, hint: "Email",     controller: _emailCtrl),
-          _Input(icon: Icons.lock_outline,   hint: "Password",  controller: _passwordCtrl, isPass: true),
-          const SizedBox(height: 30),
-          _Button(label: "SIGN UP", color: Colors.black,
-              textColor: Colors.white, onTap: _signUp),
-          const SizedBox(height: 60),
-        ])),
-        Positioned(top: 10, left: 10,
-          child: SafeArea(child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new,
-                color: Colors.white, size: 30),
-            onPressed: widget.onLoginTap,
-          ))),
-      ]),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
+                _LogoHeader(),
+                const SizedBox(height: 80),
+                const Text(
+                  "SIGN UP",
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _Input(
+                  icon: Icons.person_outline,
+                  hint: "Full Name",
+                  controller: _nameCtrl,
+                ),
+                _Input(
+                  icon: Icons.email_outlined,
+                  hint: "Email",
+                  controller: _emailCtrl,
+                ),
+                _Input(
+                  icon: Icons.lock_outline,
+                  hint: "Password",
+                  controller: _passwordCtrl,
+                  isPass: true,
+                ),
+                const SizedBox(height: 30),
+                _Button(
+                  label: "SIGN UP",
+                  color: Colors.black,
+                  textColor: Colors.white,
+                  onTap: _signUp,
+                ),
+                const SizedBox(height: 60),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 10,
+            left: 10,
+            child: SafeArea(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                onPressed: widget.onLoginTap,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -547,9 +684,14 @@ class _LogoHeader extends StatelessWidget {
     children: const [
       Icon(Icons.change_history, color: Colors.white, size: 30),
       SizedBox(width: 10),
-      Text("FITSTATION",
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold,
-              color: Colors.white)),
+      Text(
+        "FITSTATION",
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
     ],
   );
 }
@@ -559,8 +701,12 @@ class _Input extends StatelessWidget {
   final String hint;
   final bool isPass;
   final TextEditingController controller;
-  const _Input({required this.icon, required this.hint,
-      this.isPass = false, required this.controller});
+  const _Input({
+    required this.icon,
+    required this.hint,
+    this.isPass = false,
+    required this.controller,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -588,19 +734,31 @@ class _Button extends StatelessWidget {
   final String label;
   final Color color, textColor;
   final VoidCallback onTap;
-  const _Button({required this.label, required this.color,
-      required this.textColor, required this.onTap});
+  const _Button({
+    required this.label,
+    required this.color,
+    required this.textColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: 280, height: 55,
+    width: 280,
+    height: 55,
     child: ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color, shape: const StadiumBorder()),
-      child: Text(label,
-          style: TextStyle(color: textColor,
-              fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: color,
+        shape: const StadiumBorder(),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
     ),
   );
 }
@@ -610,9 +768,11 @@ class _AuthBg extends StatelessWidget {
   final Widget child;
   const _AuthBg({required this.image, required this.child});
   @override
-  Widget build(BuildContext context) => Stack(children: [
-    SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
-    Container(color: Colors.black38),
-    SafeArea(child: child),
-  ]);
+  Widget build(BuildContext context) => Stack(
+    children: [
+      SizedBox.expand(child: Image.asset(image, fit: BoxFit.cover)),
+      Container(color: Colors.black38),
+      SafeArea(child: child),
+    ],
+  );
 }
