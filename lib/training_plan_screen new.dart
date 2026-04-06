@@ -26,10 +26,10 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
 
   // Colors per level
   Map<String, List<Color>> get _levelColors => {
-        'beginner': [const Color(0xFF2ECC71), const Color(0xFF1A7A45)],
-        'intermediate': [const Color(0xFFF39C12), const Color(0xFF9A5E00)],
-        'advanced': [const Color(0xFFE74C3C), const Color(0xFF8B0000)],
-      };
+    'beginner': [const Color(0xFF2ECC71), const Color(0xFF1A7A45)],
+    'intermediate': [const Color(0xFFF39C12), const Color(0xFF9A5E00)],
+    'advanced': [const Color(0xFFE74C3C), const Color(0xFF8B0000)],
+  };
 
   List<Color> get _accentColors =>
       _levelColors[widget.level] ??
@@ -63,7 +63,10 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
     _loadMuscleGroups();
   }
 
@@ -100,8 +103,9 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         });
       } else {
         setState(() {
-          _muscleGroups =
-              snapshot.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+          _muscleGroups = snapshot.docs
+              .map((d) => {'id': d.id, ...d.data()})
+              .toList();
           _loading = false;
         });
       }
@@ -152,13 +156,13 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              sliver: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildMuscleCard(index),
-                    childCount: _muscleGroups.length,
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: _buildMuscleCard(index),
                   ),
+                  childCount: _muscleGroups.length,
                 ),
               ),
             ),
@@ -180,7 +184,11 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
             color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 16,
+          ),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -247,7 +255,10 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
               right: 20,
               top: 60,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: _accentColors),
                   borderRadius: BorderRadius.circular(30),
@@ -278,7 +289,8 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
 
   Widget _buildMuscleCard(int index) {
     final group = _muscleGroups[index];
-    final name = (group['name'] as String?) ?? group['id'] as String? ?? 'Unknown';
+    final name =
+        (group['name'] as String?) ?? group['id'] as String? ?? 'Unknown';
     final exerciseCount = group['exerciseCount'] as int? ?? 0;
     final colors = _cardPalette[index % _cardPalette.length];
 
@@ -330,19 +342,29 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded,
-                size: 64, color: Colors.red.withOpacity(0.6)),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withOpacity(0.6),
+            ),
             const SizedBox(height: 16),
-            const Text('Failed to load plans',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
+            const Text(
+              'Failed to load plans',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(_error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 13, color: Colors.white.withOpacity(0.5))),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
@@ -353,12 +375,17 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
                 backgroundColor: _accentColors[0],
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
               ),
-              child: const Text('Retry',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Retry',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -373,22 +400,29 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.fitness_center_rounded,
-                size: 72, color: _accentColors[0].withOpacity(0.4)),
+            Icon(
+              Icons.fitness_center_rounded,
+              size: 72,
+              color: _accentColors[0].withOpacity(0.4),
+            ),
             const SizedBox(height: 20),
-            const Text('No plans yet',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
+            const Text(
+              'No plans yet',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 10),
             Text(
               'No ${_levelLabel.toLowerCase()} plans found for ${widget.gender == 'female' ? 'women' : 'men'} yet.\nCheck back soon!',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 14,
-                  height: 1.6,
-                  color: Colors.white.withOpacity(0.5)),
+                fontSize: 14,
+                height: 1.6,
+                color: Colors.white.withOpacity(0.5),
+              ),
             ),
           ],
         ),
@@ -453,7 +487,8 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
       onTapCancel: () => _ctrl.forward(),
       child: AnimatedBuilder(
         animation: _ctrl,
-        builder: (_, child) => Transform.scale(scale: _ctrl.value, child: child),
+        builder: (_, child) =>
+            Transform.scale(scale: _ctrl.value, child: child),
         child: Container(
           height: 82,
           decoration: BoxDecoration(
@@ -466,9 +501,7 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
                 widget.colors[1].withOpacity(0.08),
               ],
             ),
-            border: Border.all(
-              color: widget.colors[0].withOpacity(0.25),
-            ),
+            border: Border.all(color: widget.colors[0].withOpacity(0.25)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
