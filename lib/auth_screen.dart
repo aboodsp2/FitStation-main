@@ -100,11 +100,12 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             'createdAt': FieldValue.serverTimestamp(),
             'isVerified': true,
           });
-      if (mounted)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const WelcomeScreens()),
         );
+      }
     } else {
       if (mounted) {
         setState(() => _loading = false);
@@ -113,7 +114,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
             content: const Text(
               "Email not verified yet. Please check your inbox.",
             ),
-            backgroundColor: AppTheme.primary.withOpacity(0.9),
+            backgroundColor: AppTheme.primary.withValues(alpha: 0.9),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -198,7 +199,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.35),
+                      color: AppTheme.primary.withValues(alpha: 0.35),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -233,10 +234,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
               margin: const EdgeInsets.symmetric(horizontal: 36),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.12),
+                color: AppTheme.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppTheme.accent.withOpacity(0.3),
+                  color: AppTheme.accent.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -278,12 +279,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
                   onPressed: _loading ? null : _verify,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
+                    disabledBackgroundColor: AppTheme.primary.withValues(
+                      alpha: 0.6,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
                     elevation: 6,
-                    shadowColor: AppTheme.primary.withOpacity(0.4),
+                    shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                   ),
                   child: _loading
                       ? const SizedBox(
@@ -340,7 +343,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage>
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.12),
+          color: AppTheme.accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: AppTheme.primary, size: 16),
@@ -456,11 +459,12 @@ class _SignInPageState extends State<SignInPage> {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_kEmail) ?? '';
     final remember = prefs.getBool(_kRemember) ?? false;
-    if (mounted)
+    if (mounted) {
       setState(() {
         _rememberEmail = remember;
         if (remember && saved.isNotEmpty) _emailCtrl.text = saved;
       });
+    }
   }
 
   Future<void> _login() async {
@@ -486,11 +490,12 @@ class _SignInPageState extends State<SignInPage> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text.trim(),
       );
-      if (mounted)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
         );
+      }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() => _loading = false);

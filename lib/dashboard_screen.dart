@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'app_theme.dart';
 import 'auth_screen.dart';
-import 'training_screen.dart';
 import 'supplement_store_screen.dart';
 import 'meal_plan_screen.dart';
 import 'consultation_screen.dart';
 import 'cart_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
+import 'level_selection_screen.dart';
 
 // ─── GLOBAL CART STATE ──────────────────────────────────────────────────────
 class CartManager {
@@ -656,6 +656,7 @@ class _HomeTabState extends State<_HomeTab> {
                           ),
                           child: Text(
                             b["btn"] as String,
+
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -711,7 +712,7 @@ class _HomeTabState extends State<_HomeTab> {
     }
 
     const screens = <Widget>[
-      TrainingScreen(),
+      LevelSelectionScreen(), // ← replace TrainingScreen() with this
       SupplementStoreScreen(),
       MealPlanScreen(),
       ConsultationScreen(),
