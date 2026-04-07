@@ -1,102 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app_theme.dart';
 import 'dashboard_screen.dart';
 import 'cart_screen.dart';
+import 'supplement_models.dart';
 
-// ─── DATA MODEL ──────────────────────────────────────────────────────────────
-class SupplementItem {
-  final String id, name, category, unit, imageUrl;
-  final double price, rating;
-  final int quantity;
-
-  const SupplementItem({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.unit,
-    required this.price,
-    required this.rating,
-    required this.quantity,
-    this.imageUrl = '',
-  });
-
-  /// Safely parse a Firestore value that may be num OR String → double
-  static double _toDouble(dynamic v) {
-    if (v == null) return 0.0;
-    if (v is num) return v.toDouble();
-    return double.tryParse(v.toString()) ?? 0.0;
-  }
-
-  /// Safely parse a Firestore value that may be num OR String → int
-  static int _toInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v.toString()) ?? 0;
-  }
-
-  factory SupplementItem.fromFirestore(DocumentSnapshot doc) {
-    final d = doc.data() as Map<String, dynamic>;
-    return SupplementItem(
-      id: doc.id,
-      name: d['name']?.toString() ?? '',
-      category: d['category']?.toString() ?? '',
-      unit: d['unit']?.toString() ?? '',
-      price: _toDouble(d['price']),
-      rating: _toDouble(d['rating']),
-      quantity: _toInt(d['quantity']),
-      imageUrl: d['imageUrl']?.toString() ?? '',
-    );
-  }
-}
-
-// ─── SMART IMAGE WIDGET ──────────────────────────────────────────────────────
-/// Shows asset image (path starts with "assets/"), network image (http),
-/// or a fallback icon — all in one widget.
-class _SupplementImage extends StatelessWidget {
-  final String imageUrl;
-  final double size;
-  final BorderRadius? borderRadius;
-
-  const _SupplementImage({
-    required this.imageUrl,
-    this.size = 40,
-    this.borderRadius,
-  });
-
-  bool get _isAsset => imageUrl.startsWith('assets/');
-  bool get _isNetwork => imageUrl.startsWith('http');
-
-  @override
-  Widget build(BuildContext context) {
-    Widget img;
-
-    if (_isAsset) {
-      img = Image.asset(
-        imageUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) =>
-            Icon(Icons.science_rounded, color: AppTheme.accent, size: size),
-      );
-    } else if (_isNetwork) {
-      img = Image.network(
-        imageUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) =>
-            Icon(Icons.science_rounded, color: AppTheme.accent, size: size),
-      );
-    } else {
-      img = Icon(Icons.science_rounded, color: AppTheme.accent, size: size);
-    }
-
-    if (borderRadius != null) {
-      img = ClipRRect(borderRadius: borderRadius!, child: img);
-    }
-
-    return img;
-  }
-}
+// local alias so existing code using _SupplementImage still works
+typedef _SupplementImage = SupplementImage;
 
 // ─── MAIN STORE SCREEN ───────────────────────────────────────────────────────
 class SupplementStoreScreen extends StatefulWidget {
@@ -110,6 +21,11 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
 
+  // banner auto-scroll
+  int _bannerIdx = 0;
+  late final PageController _bannerCtrl;
+  Timer? _bannerTimer;
+
   static const _categories = [
     "Pre-Workouts",
     "Proteins & Recovery",
@@ -117,6 +33,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     "Creatine & Performance",
     "Vitamins & Health",
     "Weight Loss",
+    "Snacks",
   ];
 
   static const _catMap = {
@@ -127,6 +44,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     "Creatine": "Creatine & Performance",
     "Vitamins": "Vitamins & Health",
     "Weight Loss": "Weight Loss",
+    "Snacks": "Snacks",
   };
 
   @override
@@ -134,12 +52,15 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     super.initState();
     CartManager().addListener(_onCart);
     _cartCount = CartManager().count;
+    _bannerCtrl = PageController();
   }
 
   @override
   void dispose() {
     CartManager().removeListener(_onCart);
     _searchCtrl.dispose();
+    _bannerTimer?.cancel();
+    _bannerCtrl.dispose();
     super.dispose();
   }
 
@@ -147,16 +68,31 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     if (mounted) setState(() => _cartCount = CartManager().count);
   }
 
-  void _addToCart(SupplementItem item) {
-    CartManager().addItem(
-      CartItem(
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: 1,
-        icon: Icons.science_rounded,
-      ),
-    );
+  void _startBannerTimer(int slideCount) {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      final next = (_bannerIdx + 1) % slideCount;
+      _bannerCtrl.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _addToCart(SupplementItem item, {int qty = 1}) {
+    for (int i = 0; i < qty; i++) {
+      CartManager().addItem(
+        CartItem(
+          id: item.id,
+          name: item.name,
+          price: item.effectivePrice,
+          quantity: 1,
+          icon: Icons.science_rounded,
+        ),
+      );
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -171,18 +107,29 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     );
   }
 
+  // Opens full product detail bottom sheet
+  void _openDetail(SupplementItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProductDetailSheet(
+        item: item,
+        onAddToCart: (qty) => _addToCart(item, qty: qty),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppTheme.background,
       body: StreamBuilder<QuerySnapshot>(
-        // Remove orderBy to avoid needing a Firestore index;
-        // we sort client-side instead.
         stream: FirebaseFirestore.instance
             .collection('supplements')
             .snapshots(),
         builder: (ctx, snap) {
-          // ── Loading ────────────────────────────────────────────────
           if (snap.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(
@@ -190,8 +137,6 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
               ),
             );
           }
-
-          // ── Error ──────────────────────────────────────────────────
           if (snap.hasError) {
             return Scaffold(
               body: Center(
@@ -200,7 +145,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.error_outline_rounded,
                         color: AppTheme.primary,
                         size: 56,
@@ -223,12 +168,18 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
             );
           }
 
-          // ── Parse + sort ───────────────────────────────────────────
           final all =
               (snap.data?.docs ?? []).map(SupplementItem.fromFirestore).toList()
                 ..sort((a, b) => a.name.compareTo(b.name));
 
-          // Apply search filter
+          final deals = all.where((i) => i.isOnSale).toList();
+
+          // Start banner timer with correct slide count (1 base + deals slide if any)
+          final bannerCount = deals.isEmpty ? 1 : 2;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _startBannerTimer(bannerCount);
+          });
+
           final items = _query.isEmpty
               ? all
               : all
@@ -241,7 +192,6 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     )
                     .toList();
 
-          // Group by display category
           final Map<String, List<SupplementItem>> grouped = {};
           for (final item in items) {
             final display = _catMap[item.category] ?? item.category;
@@ -250,7 +200,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
 
           return CustomScrollView(
             slivers: [
-              // ── App Bar ─────────────────────────────────────────────
+              // ── AppBar ──────────────────────────────────────────────
               SliverAppBar(
                 pinned: true,
                 backgroundColor: AppTheme.background,
@@ -352,10 +302,10 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                 ),
               ),
 
-              // ── Hero banner ─────────────────────────────────────────
-              SliverToBoxAdapter(child: _heroBanner()),
+              // ── Sliding Hero Banner ──────────────────────────────────
+              SliverToBoxAdapter(child: _heroBanner(deals, bannerCount)),
 
-              // ── Empty state ─────────────────────────────────────────
+              // ── Empty state ──────────────────────────────────────────
               if (all.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -375,7 +325,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Add supplements to your Firestore\n'supplements' collection.",
+                            "Add supplements to your Firestore 'supplements' collection.",
                             style: AppTheme.body.copyWith(fontSize: 13),
                             textAlign: TextAlign.center,
                           ),
@@ -384,7 +334,6 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     ),
                   ),
                 )
-              // ── Search results: flat list ────────────────────────────
               else if (_query.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
@@ -395,12 +344,12 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     ),
                   ),
                 )
-              // ── Category sections ────────────────────────────────────
               else ...[
+                // ── Deals section always shown first ─────────────────────
+                SliverToBoxAdapter(child: _dealsSection(deals)),
                 for (final cat in _categories)
                   if (grouped.containsKey(cat))
                     SliverToBoxAdapter(child: _section(cat, grouped[cat]!)),
-                // Any unmapped categories
                 for (final cat in grouped.keys)
                   if (!_categories.contains(cat))
                     SliverToBoxAdapter(child: _section(cat, grouped[cat]!)),
@@ -414,69 +363,288 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     );
   }
 
-  // ── Hero banner ─────────────────────────────────────────────────────────
-  Widget _heroBanner() => Container(
-    margin: const EdgeInsets.all(16),
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-    decoration: BoxDecoration(
-      color: AppTheme.dark,
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "WE HAVE EVERYTHING\nYOU NEED FROM A-Z",
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const _AllSupplementsScreen(),
+  // ── Hero banner — single slide only ─────────────────────────────────────
+  Widget _heroBanner(List<SupplementItem> deals, int count) {
+    return SizedBox(height: 155, child: _mainBannerSlide());
+  }
+
+  Widget _mainBannerSlide() => ClipRRect(
+    borderRadius: BorderRadius.circular(18),
+    child: Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.dark,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "WE HAVE EVERYTHING\nYOU NEED FROM A-Z",
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    height: 1.3,
                   ),
                 ),
-                child: Container(
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const _AllSupplementsScreen(),
+                    ),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Shop All",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.shopping_bag_outlined,
+            color: Colors.white24,
+            size: 52,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _dealsBannerSlide(List<SupplementItem> deals) => ClipRRect(
+    borderRadius: BorderRadius.circular(18),
+    child: Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primary, AppTheme.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 10,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.accent,
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
-                    "Shop All",
+                    "🔥 HOT DEALS",
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      letterSpacing: 1,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Discounted\nSupplements",
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DealsScreen(deals: deals),
+                    ),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "Shop Deals",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // no product images — background will be added later
+        ],
+      ),
+    ),
+  );
+
+  // ── Deals section — always visible, shows discounted items ──────────────
+  Widget _dealsSection(List<SupplementItem> deals) {
+    final preview = deals.take(3).toList();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          // header
+          Row(
+            children: [
+              const Text(
+                "HOT DEALS",
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: AppTheme.dark,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade600,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  deals.isEmpty ? "No deals yet" : "${deals.length} deals",
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-        const Icon(
-          Icons.shopping_bag_outlined,
-          color: Colors.white30,
-          size: 60,
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 10),
+
+          // products or empty state
+          if (deals.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: AppTheme.card(radius: 14),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.local_offer_outlined,
+                    color: AppTheme.accent,
+                    size: 36,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "No discounted products yet",
+                    style: AppTheme.body.copyWith(fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(
+                preview.length,
+                (i) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: i < preview.length - 1 ? 8 : 0,
+                    ),
+                    child: _productCard(preview[i]),
+                  ),
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 12),
+          // VIEW ALL DEALS — same style as VIEW MORE
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => DealsScreen(deals: deals)),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.divider),
+              ),
+              child: const Center(
+                child: Text(
+                  "VIEW ALL DEALS",
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: AppTheme.primary,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Divider(color: AppTheme.divider, height: 1),
+        ],
+      ),
+    );
+  }
 
   // ── Category section ─────────────────────────────────────────────────────
   Widget _section(String title, List<SupplementItem> items) {
@@ -550,151 +718,224 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     );
   }
 
-  // ── Product card ─────────────────────────────────────────────────────────
-  Widget _productCard(SupplementItem item) => Container(
-    decoration: AppTheme.card(radius: 14),
-    padding: const EdgeInsets.all(10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: item.imageUrl.isNotEmpty
-                ? _SupplementImage(
-                    imageUrl: item.imageUrl,
-                    size: 36,
-                    borderRadius: BorderRadius.circular(10),
-                  )
-                : Icon(Icons.science_rounded, color: AppTheme.accent, size: 36),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          item.name,
-          maxLines: 2,
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-            color: AppTheme.dark,
-            height: 1.3,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          "${item.price.toStringAsFixed(0)} JD",
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-            color: AppTheme.primary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        GestureDetector(
-          onTap: () => _addToCart(item),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.primary),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(
-              child: Text(
-                "ADD TO CART",
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  // ── Search result list tile ───────────────────────────────────────────────
-  Widget _listTile(SupplementItem item) => Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(14),
-    decoration: AppTheme.card(radius: 14),
-    child: Row(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: item.imageUrl.isNotEmpty
-              ? _SupplementImage(
-                  imageUrl: item.imageUrl,
-                  size: 28,
-                  borderRadius: BorderRadius.circular(12),
-                )
-              : Icon(Icons.science_rounded, color: AppTheme.accent, size: 28),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.name,
-                style: AppTheme.subheading.copyWith(fontSize: 14),
-              ),
-              const SizedBox(height: 2),
-              Text(item.unit, style: AppTheme.body.copyWith(fontSize: 12)),
-            ],
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+  // ── Product card — equal height enforced with fixed image area ───────────
+  Widget _productCard(SupplementItem item) {
+    return _ScaleOnPress(
+      onTap: () => _openDetail(item),
+      child: Container(
+        decoration: AppTheme.card(radius: 14),
+        padding: const EdgeInsets.all(10),
+        // Column with fixed-height image ensures all cards are the same size
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              "${item.price.toStringAsFixed(0)} JD",
-              style: AppTheme.subheading.copyWith(
-                color: AppTheme.primary,
-                fontSize: 14,
+            // fixed-size image box — all cards same height here
+            Stack(
+              children: [
+                SizedBox(
+                  height: 80,
+                  width: double.infinity,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: item.imageUrl.isNotEmpty
+                          ? _SupplementImage(
+                              imageUrl: item.imageUrl,
+                              size: 60,
+                              borderRadius: BorderRadius.circular(10),
+                            )
+                          : Icon(
+                              Icons.science_rounded,
+                              color: AppTheme.accent,
+                              size: 36,
+                            ),
+                    ),
+                  ),
+                ),
+                if (item.isOnSale)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        "SALE",
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // fixed 2-line name — keeps all cards same height regardless of name length
+            SizedBox(
+              height: 30,
+              child: Text(
+                item.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  color: AppTheme.dark,
+                  height: 1.3,
+                ),
               ),
             ),
             const SizedBox(height: 4),
+            // fixed-height price area (sale has 2 lines, normal has 1)
+            SizedBox(
+              height: 32,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (item.isOnSale)
+                    Text(
+                      "${item.price.toStringAsFixed(0)} JD",
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 10,
+                        color: AppTheme.muted,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  Text(
+                    item.isOnSale
+                        ? "${item.discountPrice!.toStringAsFixed(0)} JD"
+                        : "${item.price.toStringAsFixed(0)} JD",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      color: item.isOnSale ? Colors.red : AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
             GestureDetector(
               onTap: () => _addToCart(item),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 5,
-                ),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.primary),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  "Add",
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                child: const Center(
+                  child: Text(
+                    "ADD TO CART",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+
+  // ── Search result list tile ───────────────────────────────────────────────
+  Widget _listTile(SupplementItem item) => _ScaleOnPress(
+    onTap: () => _openDetail(item),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.card(radius: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: item.imageUrl.isNotEmpty
+                ? _SupplementImage(
+                    imageUrl: item.imageUrl,
+                    size: 28,
+                    borderRadius: BorderRadius.circular(12),
+                  )
+                : Icon(Icons.science_rounded, color: AppTheme.accent, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: AppTheme.subheading.copyWith(fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                Text(item.unit, style: AppTheme.body.copyWith(fontSize: 12)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "${item.effectivePrice.toStringAsFixed(0)} JD",
+                style: AppTheme.subheading.copyWith(
+                  color: item.isOnSale ? Colors.red : AppTheme.primary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => _addToCart(item),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "Add",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 
@@ -739,6 +980,314 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
   }
 }
 
+// ─── SCALE ON PRESS ──────────────────────────────────────────────────────────
+class _ScaleOnPress extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _ScaleOnPress({required this.child, required this.onTap});
+  @override
+  State<_ScaleOnPress> createState() => _ScaleOnPressState();
+}
+
+class _ScaleOnPressState extends State<_ScaleOnPress>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+    lowerBound: 0.0,
+    upperBound: 0.05,
+  );
+  late final Animation<double> _scale = Tween<double>(
+    begin: 1.0,
+    end: 1.06,
+  ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOut));
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTapDown: (_) => _ac.forward(),
+    onTapUp: (_) {
+      _ac.reverse();
+      widget.onTap();
+    },
+    onTapCancel: () => _ac.reverse(),
+    child: ScaleTransition(scale: _scale, child: widget.child),
+  );
+}
+
+// ─── PRODUCT DETAIL BOTTOM SHEET ─────────────────────────────────────────────
+class _ProductDetailSheet extends StatefulWidget {
+  final SupplementItem item;
+  final Function(int qty) onAddToCart;
+  const _ProductDetailSheet({required this.item, required this.onAddToCart});
+  @override
+  State<_ProductDetailSheet> createState() => _ProductDetailSheetState();
+}
+
+class _ProductDetailSheetState extends State<_ProductDetailSheet> {
+  int _qty = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, scroll) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: ListView(
+          controller: scroll,
+          children: [
+            // drag handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.divider,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+            // product image — large
+            Container(
+              height: 220,
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: item.imageUrl.isNotEmpty
+                  ? _SupplementImage(
+                      imageUrl: item.imageUrl,
+                      size: 140,
+                      borderRadius: BorderRadius.circular(22),
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(
+                      Icons.science_rounded,
+                      color: AppTheme.accent,
+                      size: 90,
+                    ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // sale badge
+                  if (item.isOnSale)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "SAVE ${((1 - item.discountPrice! / item.price) * 100).round()}% OFF",
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+
+                  // name
+                  Text(
+                    item.name,
+                    style: AppTheme.heading.copyWith(fontSize: 20, height: 1.2),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // unit
+                  Text(item.unit, style: AppTheme.body.copyWith(fontSize: 13)),
+                  const SizedBox(height: 10),
+
+                  // rating row
+                  Row(
+                    children: [
+                      ...List.generate(
+                        5,
+                        (i) => Icon(
+                          i < item.rating.round()
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: AppTheme.accent,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${item.rating.toStringAsFixed(1)}",
+                        style: AppTheme.subheading.copyWith(
+                          fontSize: 13,
+                          color: AppTheme.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // price
+                  Row(
+                    children: [
+                      if (item.isOnSale) ...[
+                        Text(
+                          "${item.discountPrice!.toStringAsFixed(0)} JD",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "${item.price.toStringAsFixed(0)} JD",
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16,
+                            color: AppTheme.muted,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ] else
+                        Text(
+                          "${item.price.toStringAsFixed(0)} JD",
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  // description
+                  if (item.description.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      "About this product",
+                      style: AppTheme.subheading.copyWith(fontSize: 14),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.description,
+                      style: AppTheme.body.copyWith(fontSize: 13, height: 1.6),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // qty selector + add to cart
+                  Row(
+                    children: [
+                      // qty controls
+                      Container(
+                        decoration: AppTheme.card(radius: 30),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _qtyBtn(Icons.remove, () {
+                              if (_qty > 1) setState(() => _qty--);
+                            }),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              child: Text(
+                                "$_qty",
+                                style: AppTheme.subheading.copyWith(
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            _qtyBtn(Icons.add, () => setState(() => _qty++)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      // add to cart button
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              elevation: 4,
+                              shadowColor: AppTheme.primary.withOpacity(0.35),
+                            ),
+                            onPressed: () {
+                              widget.onAddToCart(_qty);
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              "Add $_qty to Cart",
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: AppTheme.accent.withOpacity(0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: AppTheme.primary, size: 18),
+    ),
+  );
+}
+
 // ─── CATEGORY DETAIL SCREEN ───────────────────────────────────────────────────
 class _CategoryScreen extends StatefulWidget {
   final String category;
@@ -750,12 +1299,15 @@ class _CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<_CategoryScreen> {
   int _cartCount = 0;
+  // qty per item (id → qty)
+  final Map<String, int> _qtys = {};
 
   @override
   void initState() {
     super.initState();
     CartManager().addListener(_onCart);
     _cartCount = CartManager().count;
+    for (final item in widget.allItems) _qtys[item.id] = 1;
   }
 
   @override
@@ -769,19 +1321,22 @@ class _CategoryScreenState extends State<_CategoryScreen> {
   }
 
   void _addToCart(SupplementItem item) {
-    CartManager().addItem(
-      CartItem(
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: 1,
-        icon: Icons.science_rounded,
-      ),
-    );
+    final qty = _qtys[item.id] ?? 1;
+    for (int i = 0; i < qty; i++) {
+      CartManager().addItem(
+        CartItem(
+          id: item.id,
+          name: item.name,
+          price: item.effectivePrice,
+          quantity: 1,
+          icon: Icons.science_rounded,
+        ),
+      );
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          "${item.name} added to cart",
+          "${item.name} × $qty added to cart",
           style: const TextStyle(fontFamily: 'Poppins'),
         ),
         backgroundColor: AppTheme.primary,
@@ -792,9 +1347,34 @@ class _CategoryScreenState extends State<_CategoryScreen> {
     );
   }
 
+  void _openDetail(SupplementItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProductDetailSheet(
+        item: item,
+        onAddToCart: (qty) {
+          for (int i = 0; i < qty; i++) {
+            CartManager().addItem(
+              CartItem(
+                id: item.id,
+                name: item.name,
+                price: item.effectivePrice,
+                quantity: 1,
+                icon: Icons.science_rounded,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
@@ -825,114 +1405,540 @@ class _CategoryScreenState extends State<_CategoryScreen> {
     );
   }
 
-  Widget _detailCard(SupplementItem item) => Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: AppTheme.card(radius: 18),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 110,
-          height: 130,
-          decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.08),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
+  Widget _detailCard(SupplementItem item) {
+    final qty = _qtys[item.id] ?? 1;
+    return _ScaleOnPress(
+      onTap: () => _openDetail(item),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: AppTheme.card(radius: 18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // image
+            Container(
+              width: 110,
+              height: 140,
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.08),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
+              ),
+              child: item.imageUrl.isNotEmpty
+                  ? _SupplementImage(
+                      imageUrl: item.imageUrl,
+                      size: 46,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(18),
+                        bottomLeft: Radius.circular(18),
+                      ),
+                    )
+                  : Icon(
+                      Icons.science_rounded,
+                      color: AppTheme.accent,
+                      size: 46,
+                    ),
             ),
-          ),
-          child: item.imageUrl.isNotEmpty
-              ? _SupplementImage(
-                  imageUrl: item.imageUrl,
-                  size: 46,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(18),
-                    bottomLeft: Radius.circular(18),
-                  ),
-                )
-              : Icon(Icons.science_rounded, color: AppTheme.accent, size: 46),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: AppTheme.dark,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(item.unit, style: AppTheme.body.copyWith(fontSize: 12)),
-                const SizedBox(height: 4),
-                Row(
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...List.generate(
-                      5,
-                      (i) => Icon(
-                        i < item.rating.round()
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
-                        color: AppTheme.accent,
-                        size: 14,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "(${item.rating.toStringAsFixed(1)})",
-                      style: AppTheme.body.copyWith(fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "${item.price.toStringAsFixed(0)} JD",
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _addToCart(item),
-                      child: Container(
+                    // sale badge
+                    if (item.isOnSale)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 4),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
+                          horizontal: 8,
+                          vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.red.shade600,
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          "BUY NOW",
+                          "SALE",
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppTheme.dark,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.unit,
+                      style: AppTheme.body.copyWith(fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    // stars
+                    Row(
+                      children: [
+                        ...List.generate(
+                          5,
+                          (i) => Icon(
+                            i < item.rating.round()
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: AppTheme.accent,
+                            size: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "(${item.rating.toStringAsFixed(1)})",
+                          style: AppTheme.body.copyWith(fontSize: 10),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // price
+                    if (item.isOnSale) ...[
+                      Text(
+                        "${item.price.toStringAsFixed(0)} JD",
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: AppTheme.muted,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      Text(
+                        "${item.discountPrice!.toStringAsFixed(0)} JD",
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ] else
+                      Text(
+                        "${item.price.toStringAsFixed(0)} JD",
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    // ── Qty + BUY NOW row ──────────────────────────────────
+                    Row(
+                      children: [
+                        // qty controls
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppTheme.divider),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _qtyBtn(Icons.remove, () {
+                                if (qty > 1)
+                                  setState(() => _qtys[item.id] = qty - 1);
+                              }),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Text(
+                                  "$qty",
+                                  style: AppTheme.subheading.copyWith(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              _qtyBtn(
+                                Icons.add,
+                                () => setState(() => _qtys[item.id] = qty + 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // buy now
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _addToCart(item),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "BUY NOW",
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: AppTheme.accent.withOpacity(0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 14, color: AppTheme.primary),
+    ),
+  );
+}
+
+// ─── DEALS SCREEN (public — also used from dashboard banner) ─────────────────
+class DealsScreen extends StatefulWidget {
+  final List<SupplementItem> deals;
+  const DealsScreen({super.key, required this.deals});
+  @override
+  State<DealsScreen> createState() => _DealsScreenState();
+}
+
+class _DealsScreenState extends State<DealsScreen> {
+  int _cartCount = 0;
+  final Map<String, int> _qtys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    CartManager().addListener(_onCart);
+    _cartCount = CartManager().count;
+    for (final item in widget.deals) _qtys[item.id] = 1;
+  }
+
+  @override
+  void dispose() {
+    CartManager().removeListener(_onCart);
+    super.dispose();
+  }
+
+  void _onCart() {
+    if (mounted) setState(() => _cartCount = CartManager().count);
+  }
+
+  void _addToCart(SupplementItem item) {
+    final qty = _qtys[item.id] ?? 1;
+    for (int i = 0; i < qty; i++) {
+      CartManager().addItem(
+        CartItem(
+          id: item.id,
+          name: item.name,
+          price: item.effectivePrice,
+          quantity: 1,
+          icon: Icons.science_rounded,
+        ),
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "${item.name} added to cart",
+          style: const TextStyle(fontFamily: 'Poppins'),
+        ),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppTheme.dark,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "🔥 Hot Deals",
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: AppTheme.dark,
           ),
         ),
-      ],
+        actions: [_cartIcon(context, _cartCount), const SizedBox(width: 4)],
+      ),
+      body: widget.deals.isEmpty
+          ? Center(
+              child: Text(
+                "No deals available right now.",
+                style: AppTheme.body.copyWith(fontSize: 15),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.deals.length,
+              itemBuilder: (_, i) {
+                final item = widget.deals[i];
+                final qty = _qtys[item.id] ?? 1;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: AppTheme.card(radius: 18),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 110,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent.withOpacity(0.08),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            bottomLeft: Radius.circular(18),
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: item.imageUrl.isNotEmpty
+                                  ? _SupplementImage(
+                                      imageUrl: item.imageUrl,
+                                      size: 70,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(18),
+                                        bottomLeft: Radius.circular(18),
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.science_rounded,
+                                      color: AppTheme.accent,
+                                      size: 50,
+                                    ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade600,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "-${((1 - item.discountPrice! / item.price) * 100).round()}%",
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.name,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: AppTheme.dark,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                item.unit,
+                                style: AppTheme.body.copyWith(fontSize: 12),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  ...List.generate(
+                                    5,
+                                    (i) => Icon(
+                                      i < item.rating.round()
+                                          ? Icons.star_rounded
+                                          : Icons.star_outline_rounded,
+                                      color: AppTheme.accent,
+                                      size: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Text(
+                                    "${item.discountPrice!.toStringAsFixed(0)} JD",
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.red.shade700,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "${item.price.toStringAsFixed(0)} JD",
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 12,
+                                      color: AppTheme.muted,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: AppTheme.divider,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 2,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _qtyBtn(Icons.remove, () {
+                                          if (qty > 1)
+                                            setState(
+                                              () => _qtys[item.id] = qty - 1,
+                                            );
+                                        }),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                          ),
+                                          child: Text(
+                                            "$qty",
+                                            style: AppTheme.subheading.copyWith(
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                        _qtyBtn(
+                                          Icons.add,
+                                          () => setState(
+                                            () => _qtys[item.id] = qty + 1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => _addToCart(item),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            "BUY NOW",
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: AppTheme.accent.withOpacity(0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 14, color: AppTheme.primary),
     ),
   );
 }
@@ -968,7 +1974,7 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
       CartItem(
         id: item.id,
         name: item.name,
-        price: item.price,
+        price: item.effectivePrice,
         quantity: 1,
         icon: Icons.science_rounded,
       ),
@@ -990,6 +1996,7 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
@@ -1027,10 +2034,7 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
 
           if (items.isEmpty)
             return Center(
-              child: Text(
-                "No supplements in the database.",
-                style: AppTheme.body,
-              ),
+              child: Text("No supplements in database.", style: AppTheme.body),
             );
 
           return ListView.builder(
@@ -1095,12 +2099,14 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "${item.price.toStringAsFixed(0)} JD",
-                                  style: const TextStyle(
+                                  "${item.effectivePrice.toStringAsFixed(0)} JD",
+                                  style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontWeight: FontWeight.w800,
                                     fontSize: 14,
-                                    color: AppTheme.primary,
+                                    color: item.isOnSale
+                                        ? Colors.red
+                                        : AppTheme.primary,
                                   ),
                                 ),
                                 GestureDetector(
@@ -1142,7 +2148,7 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
   }
 }
 
-// ─── Shared cart icon widget ───────────────────────────────────────────────
+// ─── Shared cart icon ─────────────────────────────────────────────────────────
 Widget _cartIcon(BuildContext context, int count) => Stack(
   children: [
     IconButton(

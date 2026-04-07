@@ -182,6 +182,13 @@ flutter:
     - assets/supplements/pre/12.jpg
     - assets/supplements/pre/13.jpg
     - assets/supplements/pre/14.jpg
+    - assets/discount/1.jpg
+    - assets/discount/2.jpg
+    - assets/discount/3.jpg
+    - assets/discount/4.jpg
+    - assets/discount/5.jpg
+    - assets/discount/6.jpg
+    - assets/discount/7.jpg
       
   # To add assets to your application, add an assets section, like this:
 

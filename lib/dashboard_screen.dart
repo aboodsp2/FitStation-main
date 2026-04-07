@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'app_theme.dart';
 import 'auth_screen.dart';
+import 'training_screen.dart';
 import 'supplement_store_screen.dart';
+import 'supplement_models.dart';
 import 'meal_plan_screen.dart';
 import 'consultation_screen.dart';
 import 'cart_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
-import 'level_selection_screen.dart';
 
 // ─── GLOBAL CART STATE ──────────────────────────────────────────────────────
 class CartManager {
@@ -138,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ── Glassy / frosted bottom nav bar ─────────────────────────────────────
   Widget _glassNav() => Positioned(
-    bottom: 25,
+    bottom: 20,
     left: 20,
     right: 20,
     child: ClipRRect(
@@ -165,10 +166,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _ni(0, Icons.home_rounded, ""),
-              _ni(1, Icons.info_outline_rounded, ""),
-              _nb(2, Icons.shopping_cart_outlined, "", _cartCount),
-              _ni(3, Icons.person_outline_rounded, ""),
+              _ni(0, Icons.home_rounded, "Home"),
+              _ni(1, Icons.info_outline_rounded, "About"),
+              _nb(2, Icons.shopping_cart_outlined, "Cart", _cartCount),
+              _ni(3, Icons.person_outline_rounded, "Profile"),
             ],
           ),
         ),
@@ -199,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 220),
               style: TextStyle(
-                fontSize: sel ? 3 : 0,
+                fontSize: sel ? 10 : 0,
                 color: sel ? AppTheme.primary : Colors.transparent,
                 fontWeight: FontWeight.w600,
               ),
@@ -262,7 +263,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 220),
               style: TextStyle(
-                fontSize: sel ? 3 : 0,
+                fontSize: sel ? 10 : 0,
                 color: sel ? AppTheme.primary : Colors.transparent,
                 fontWeight: FontWeight.w600,
               ),
@@ -290,7 +291,8 @@ class _HomeTabState extends State<_HomeTab> {
   late final PageController _bannerCtrl;
   Timer? _timer;
 
-  static const _banners = [
+  // The first 3 static slides — deals slide is added dynamically if Firestore has deals
+  static const _staticBanners = [
     {
       "tag": "LIMITED OFFER",
       "title": "20% Off\nFresh Plans",
@@ -359,10 +361,11 @@ class _HomeTabState extends State<_HomeTab> {
   void initState() {
     super.initState();
     _bannerCtrl = PageController();
+    // timer count updated dynamically inside _banner() once Firestore loads
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;
-      _bannerCtrl.animateToPage(
-        (_bannerIdx + 1) % _banners.length,
+      final count = _bannerIdx; // current idx used to calculate next safely
+      _bannerCtrl.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
@@ -393,6 +396,13 @@ class _HomeTabState extends State<_HomeTab> {
           children: [
             Text("Explore", style: AppTheme.subheading.copyWith(fontSize: 18)),
             const Spacer(),
+            Text(
+              "See all",
+              style: AppTheme.body.copyWith(
+                color: AppTheme.accent,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -480,12 +490,11 @@ class _HomeTabState extends State<_HomeTab> {
             GestureDetector(
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                if (ctx.mounted) {
+                if (ctx.mounted)
                   Navigator.of(ctx).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
                     (_) => false,
                   );
-                }
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -545,156 +554,351 @@ class _HomeTabState extends State<_HomeTab> {
     ),
   );
 
-  // ── Banner — fixed height 168, no overflow ───────────────────────────────
-  Widget _banner() => Column(
-    children: [
-      SizedBox(
-        height: 168,
-        child: PageView.builder(
-          controller: _bannerCtrl,
-          itemCount: _banners.length,
-          onPageChanged: (i) => setState(() => _bannerIdx = i),
-          itemBuilder: (_, i) {
-            final b = _banners[i];
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.primary, AppTheme.primaryLight],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.3),
-                    blurRadius: 18,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // decorative circle
-                  Positioned(
-                    right: -20,
-                    top: -20,
+  // ── Banner — 3 static slides + optional deals slide from Firestore ─────────
+  Widget _banner() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('supplements').snapshots(),
+      builder: (ctx, snap) {
+        // Build deals list from Firestore (items with discountPrice < price)
+        List<SupplementItem> deals = [];
+        if (snap.hasData) {
+          deals = snap.data!.docs
+              .map(SupplementItem.fromFirestore)
+              .where((i) => i.isOnSale)
+              .toList();
+        }
+
+        final hasDeals = deals.isNotEmpty;
+        final totalSlides = _staticBanners.length + (hasDeals ? 1 : 0);
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 190,
+              child: PageView.builder(
+                controller: _bannerCtrl,
+                itemCount: totalSlides,
+                onPageChanged: (i) => setState(() => _bannerIdx = i),
+                itemBuilder: (_, i) {
+                  // Slides 0-2: static banners
+                  if (i < _staticBanners.length) {
+                    final b = _staticBanners[i];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primary, AppTheme.primaryLight],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withOpacity(0.3),
+                              blurRadius: 18,
+                              offset: const Offset(0, 7),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: -20,
+                              top: -20,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.06),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 16,
+                              bottom: 10,
+                              child: Icon(
+                                b["icon"] as IconData,
+                                size: 60,
+                                color: Colors.white.withOpacity(0.10),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 18,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.18),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      b["tag"] as String,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    b["title"] as String,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    b["sub"] as String,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.65),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Slide 1 (index 0) → Supplement store
+                                      if (i == 1) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SupplementStoreScreen(),
+                                          ),
+                                        );
+                                      }
+                                      // Slide 2 (index 2) → Consultation
+                                      else if (i == 2) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const ConsultationScreen(),
+                                          ),
+                                        );
+                                      }
+                                      // Slide 0 → nothing special / scroll down
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accent,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        b["btn"] as String,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Slide 3: Deals slide — AppTheme colors, no product images
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
                     child: Container(
-                      width: 140,
-                      height: 140,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [AppTheme.primary, AppTheme.primaryLight],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primary.withOpacity(0.35),
+                            blurRadius: 18,
+                            offset: const Offset(0, 7),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          // decorative circle
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.06),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          // decorative icon only — no product images
+                          Positioned(
+                            right: 16,
+                            bottom: 10,
+                            child: Icon(
+                              Icons.local_offer_rounded,
+                              size: 60,
+                              color: Colors.white.withOpacity(0.10),
+                            ),
+                          ),
+                          // text content
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 22,
+                              vertical: 18,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    "🔥 HOT DEALS",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.3,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Up to ${_maxDiscount(deals)}% OFF",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "${deals.length} discounted products",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.75),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => DealsScreen(deals: deals),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accent,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      "Shop Deals",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            // dot indicators
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('supplements')
+                  .snapshots(),
+              builder: (_, s) {
+                final d = s.hasData
+                    ? s.data!.docs
+                          .map(SupplementItem.fromFirestore)
+                          .where((i) => i.isOnSale)
+                          .length
+                    : 0;
+                final count = _staticBanners.length + (d > 0 ? 1 : 0);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    count,
+                    (i) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 280),
+                      width: _bannerIdx == i ? 22 : 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: _bannerIdx == i
+                            ? AppTheme.primary
+                            : AppTheme.accent.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
-                  Positioned(
-                    right: 16,
-                    bottom: 10,
-                    child: Icon(
-                      b["icon"] as IconData,
-                      size: 60,
-                      color: Colors.white.withOpacity(0.10),
-                    ),
-                  ),
-                  // content
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 18,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            b["tag"] as String,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.3,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          b["title"] as String,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          b["sub"] as String,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.65),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accent,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            b["btn"] as String,
-
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: 10),
-      // dot indicators
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(
-          _banners.length,
-          (i) => AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            width: _bannerIdx == i ? 22 : 6,
-            height: 6,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            decoration: BoxDecoration(
-              color: _bannerIdx == i
-                  ? AppTheme.primary
-                  : AppTheme.accent.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(10),
+                );
+              },
             ),
-          ),
-        ),
-      ),
-    ],
-  );
+          ],
+        );
+      },
+    );
+  }
+
+  int _maxDiscount(List<SupplementItem> deals) {
+    if (deals.isEmpty) return 0;
+    return deals
+        .map((d) => ((1 - d.discountPrice! / d.price) * 100).round())
+        .reduce((a, b) => a > b ? a : b);
+  }
 
   // ── Grid ─────────────────────────────────────────────────────────────────
   Widget _grid() {
@@ -712,7 +916,7 @@ class _HomeTabState extends State<_HomeTab> {
     }
 
     const screens = <Widget>[
-      LevelSelectionScreen(), // ← replace TrainingScreen() with this
+      TrainingScreen(),
       SupplementStoreScreen(),
       MealPlanScreen(),
       ConsultationScreen(),
