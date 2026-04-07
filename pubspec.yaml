@@ -189,7 +189,27 @@ flutter:
     - assets/discount/5.jpg
     - assets/discount/6.jpg
     - assets/discount/7.jpg
-      
+    - assets/Mbeginner/chest/chest-stretch.mp4
+    - assets/Mbeginner/chest/chest-press.mp4
+    - assets/Mbeginner/chest/bench-press.mp4
+    - assets/Mbeginner/chest/push-up.mp4
+    - assets/Mbeginner/back/straight-seated-row.mp4
+    - assets/Mbeginner/back/wheel-rollout.mp4
+    - assets/Mbeginner/back/wide-pulldown.mp4
+    - assets/Mbeginner/back/shrug.mp4
+    - assets/Mbeginner/legs/seated-leg-curl.mp4
+    - assets/Mbeginner/legs/leg-extension.mp4
+    - assets/Mbeginner/legs/seated-calf.mp4
+    - assets/Mbeginner/shoulders/lying-around-theworld.mp4
+    - assets/Mbeginner/shoulders/shoulder-press.mp4
+    - assets/Mbeginner/shoulders/lateral-shoulder.mp4
+    - assets/Mbeginner/arms/alt-biceps.mp4
+    - assets/Mbeginner/arms/curl-biceps.mp4
+    - assets/Mbeginner/arms/triceps-pushdown.mp4
+    - assets/Mbeginner/arms/seated-bench.mp4
+    - assets/Mbeginner/core/lever-back.mp4
+    - assets/Mbeginner/core/lever-seated.mp4
+    - assets/Mbeginner/core/yoga-cobra.mp4  
   # To add assets to your application, add an assets section, like this:
 
 

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fitness_app/level_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'app_theme.dart';
 import 'auth_screen.dart';
-import 'training_screen.dart';
 import 'supplement_store_screen.dart';
 import 'supplement_models.dart';
 import 'meal_plan_screen.dart';
@@ -915,7 +915,7 @@ class _HomeTabState extends State<_HomeTab> {
     }
 
     const screens = <Widget>[
-      TrainingScreen(),
+      LevelSelectionScreen(),
       SupplementStoreScreen(),
       MealPlanScreen(),
       ConsultationScreen(),
