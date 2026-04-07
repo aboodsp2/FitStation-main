@@ -291,7 +291,7 @@ class _HomeTabState extends State<_HomeTab> {
   late final PageController _bannerCtrl;
   Timer? _timer;
 
-  // The first 3 static slides — deals slide is added dynamically if Firestore has deals
+  // Slides 0-3 are static; slide 4 (deals) added dynamically when Firestore has deals
   static const _staticBanners = [
     {
       "tag": "LIMITED OFFER",
@@ -299,13 +299,15 @@ class _HomeTabState extends State<_HomeTab> {
       "sub": "Use code FIT20 at checkout",
       "btn": "Shop Now",
       "icon": Icons.local_fire_department_rounded,
+      "action": "supplements",
     },
     {
-      "tag": "NEW ARRIVALS",
-      "title": "Elite\nSupplements",
-      "sub": "Premium quality, certified",
-      "btn": "Explore",
-      "icon": Icons.science_rounded,
+      "tag": "MEAL PLANS",
+      "title": "Customize\nYour Meal Plan",
+      "sub": "Tailored nutrition for your goals",
+      "btn": "Customize",
+      "icon": Icons.restaurant_menu_rounded,
+      "action": "meal",
     },
     {
       "tag": "BOOK NOW",
@@ -313,6 +315,7 @@ class _HomeTabState extends State<_HomeTab> {
       "sub": "Certified personal trainers",
       "btn": "Reserve",
       "icon": Icons.video_call_rounded,
+      "action": "consultation",
     },
   ];
 
@@ -360,11 +363,10 @@ class _HomeTabState extends State<_HomeTab> {
   @override
   void initState() {
     super.initState();
-    _bannerCtrl = PageController();
-    // timer count updated dynamically inside _banner() once Firestore loads
+    // Start in the middle of the loop range so swiping backwards also works
+    _bannerCtrl = PageController(initialPage: 500);
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;
-      final count = _bannerIdx; // current idx used to calculate next safely
       _bannerCtrl.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
@@ -554,12 +556,11 @@ class _HomeTabState extends State<_HomeTab> {
     ),
   );
 
-  // ── Banner — 3 static slides + optional deals slide from Firestore ─────────
+  // ── Banner — infinite loop, all slides with working buttons ────────────
   Widget _banner() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('supplements').snapshots(),
       builder: (ctx, snap) {
-        // Build deals list from Firestore (items with discountPrice < price)
         List<SupplementItem> deals = [];
         if (snap.hasData) {
           deals = snap.data!.docs
@@ -569,7 +570,10 @@ class _HomeTabState extends State<_HomeTab> {
         }
 
         final hasDeals = deals.isNotEmpty;
-        final totalSlides = _staticBanners.length + (hasDeals ? 1 : 0);
+        final realCount = _staticBanners.length + (hasDeals ? 1 : 0);
+        // Large multiple for "infinite" feel — user will never reach the end
+        const loopFactor = 1000;
+        final loopCount = realCount * loopFactor;
 
         return Column(
           children: [
@@ -577,10 +581,13 @@ class _HomeTabState extends State<_HomeTab> {
               height: 190,
               child: PageView.builder(
                 controller: _bannerCtrl,
-                itemCount: totalSlides,
-                onPageChanged: (i) => setState(() => _bannerIdx = i),
-                itemBuilder: (_, i) {
-                  // Slides 0-2: static banners
+                itemCount: loopCount,
+                onPageChanged: (i) =>
+                    setState(() => _bannerIdx = i % realCount),
+                itemBuilder: (_, loopI) {
+                  final i = loopI % realCount;
+
+                  // ── Static slides 0-2 ──────────────────────────────────
                   if (i < _staticBanners.length) {
                     final b = _staticBanners[i];
                     return ClipRRect(
@@ -674,27 +681,36 @@ class _HomeTabState extends State<_HomeTab> {
                                   const SizedBox(height: 12),
                                   GestureDetector(
                                     onTap: () {
-                                      // Slide 1 (index 0) → Supplement store
-                                      if (i == 1) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const SupplementStoreScreen(),
-                                          ),
-                                        );
+                                      final action = b["action"] as String;
+                                      switch (action) {
+                                        case "supplements":
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const SupplementStoreScreen(),
+                                            ),
+                                          );
+                                          break;
+                                        case "meal":
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const MealPlanScreen(),
+                                            ),
+                                          );
+                                          break;
+                                        case "consultation":
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const ConsultationScreen(),
+                                            ),
+                                          );
+                                          break;
                                       }
-                                      // Slide 2 (index 2) → Consultation
-                                      else if (i == 2) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ConsultationScreen(),
-                                          ),
-                                        );
-                                      }
-                                      // Slide 0 → nothing special / scroll down
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -724,7 +740,7 @@ class _HomeTabState extends State<_HomeTab> {
                     );
                   }
 
-                  // Slide 3: Deals slide — AppTheme colors, no product images
+                  // ── Deals slide (index == realCount - 1) ───────────────
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: Container(
@@ -746,7 +762,6 @@ class _HomeTabState extends State<_HomeTab> {
                       ),
                       child: Stack(
                         children: [
-                          // decorative circle
                           Positioned(
                             right: -20,
                             top: -20,
@@ -759,7 +774,6 @@ class _HomeTabState extends State<_HomeTab> {
                               ),
                             ),
                           ),
-                          // decorative icon only — no product images
                           Positioned(
                             right: 16,
                             bottom: 10,
@@ -769,7 +783,6 @@ class _HomeTabState extends State<_HomeTab> {
                               color: Colors.white.withOpacity(0.10),
                             ),
                           ),
-                          // text content
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 22,
@@ -854,38 +867,24 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ),
             const SizedBox(height: 10),
-            // dot indicators
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('supplements')
-                  .snapshots(),
-              builder: (_, s) {
-                final d = s.hasData
-                    ? s.data!.docs
-                          .map(SupplementItem.fromFirestore)
-                          .where((i) => i.isOnSale)
-                          .length
-                    : 0;
-                final count = _staticBanners.length + (d > 0 ? 1 : 0);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    count,
-                    (i) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 280),
-                      width: _bannerIdx == i ? 22 : 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        color: _bannerIdx == i
-                            ? AppTheme.primary
-                            : AppTheme.accent.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
+            // dot indicators — show real position via modulo
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                realCount,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  width: _bannerIdx == i ? 22 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: _bannerIdx == i
+                        ? AppTheme.primary
+                        : AppTheme.accent.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ],
         );
