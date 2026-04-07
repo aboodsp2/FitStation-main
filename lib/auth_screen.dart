@@ -823,9 +823,8 @@ class _Input extends StatelessWidget {
   const _Input({
     required this.icon,
     required this.hint,
-    this.isPass = false,
     required this.controller,
-  });
+  }) : isPass = false;
 
   @override
   Widget build(BuildContext context) => Padding(

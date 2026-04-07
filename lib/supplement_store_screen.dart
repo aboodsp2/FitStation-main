@@ -435,101 +435,6 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
     ),
   );
 
-  Widget _dealsBannerSlide(List<SupplementItem> deals) => ClipRRect(
-    borderRadius: BorderRadius.circular(18),
-    child: Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.primary, AppTheme.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    "🔥 HOT DEALS",
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 10,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Discounted\nSupplements",
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DealsScreen(deals: deals),
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "Shop Deals",
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // no product images — background will be added later
-        ],
-      ),
-    ),
-  );
-
   // ── Deals section — always visible, shows discounted items ──────────────
   Widget _dealsSection(List<SupplementItem> deals) {
     final preview = deals.take(3).toList();
@@ -1138,7 +1043,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "${item.rating.toStringAsFixed(1)}",
+                        item.rating.toStringAsFixed(1),
                         style: AppTheme.subheading.copyWith(
                           fontSize: 13,
                           color: AppTheme.muted,
@@ -1307,7 +1212,9 @@ class _CategoryScreenState extends State<_CategoryScreen> {
     super.initState();
     CartManager().addListener(_onCart);
     _cartCount = CartManager().count;
-    for (final item in widget.allItems) _qtys[item.id] = 1;
+    for (final item in widget.allItems) {
+      _qtys[item.id] = 1;
+    }
   }
 
   @override
@@ -1555,8 +1462,9 @@ class _CategoryScreenState extends State<_CategoryScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _qtyBtn(Icons.remove, () {
-                                if (qty > 1)
+                                if (qty > 1) {
                                   setState(() => _qtys[item.id] = qty - 1);
+                                }
                               }),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -1862,10 +1770,11 @@ class _DealsScreenState extends State<DealsScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         _qtyBtn(Icons.remove, () {
-                                          if (qty > 1)
+                                          if (qty > 1) {
                                             setState(
                                               () => _qtys[item.id] = qty - 1,
                                             );
+                                          }
                                         }),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
