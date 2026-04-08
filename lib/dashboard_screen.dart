@@ -38,6 +38,9 @@ class CartManager {
         price: item.price,
         quantity: items[idx].quantity + 1,
         icon: item.icon,
+        imageUrl: items[idx].imageUrl.isNotEmpty
+            ? items[idx].imageUrl
+            : item.imageUrl,
       );
     } else {
       items.add(item);
@@ -62,6 +65,7 @@ class CartManager {
           price: items[idx].price,
           quantity: qty,
           icon: items[idx].icon,
+          imageUrl: items[idx].imageUrl, // preserve imageUrl
         );
       }
       _notify();
@@ -77,12 +81,14 @@ class CartItem {
   final double price;
   final int quantity;
   final IconData icon;
+  final String imageUrl;
   const CartItem({
     required this.id,
     required this.name,
     required this.price,
     required this.quantity,
     required this.icon,
+    this.imageUrl = '',
   });
 }
 
@@ -390,7 +396,8 @@ class _HomeTabState extends State<_HomeTab> {
         const SizedBox(height: 14),
         _header(),
         const SizedBox(height: 20),
-
+        _searchBar(),
+        const SizedBox(height: 22),
         _banner(),
         const SizedBox(height: 26),
         Row(
@@ -398,7 +405,7 @@ class _HomeTabState extends State<_HomeTab> {
             Text("Explore", style: AppTheme.subheading.copyWith(fontSize: 18)),
             const Spacer(),
             Text(
-              "",
+              "See all",
               style: AppTheme.body.copyWith(
                 color: AppTheme.accent,
                 fontSize: 13,
@@ -491,12 +498,11 @@ class _HomeTabState extends State<_HomeTab> {
             GestureDetector(
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                if (ctx.mounted) {
+                if (ctx.mounted)
                   Navigator.of(ctx).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
                     (_) => false,
                   );
-                }
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -513,6 +519,48 @@ class _HomeTabState extends State<_HomeTab> {
       },
     );
   }
+
+  // ── Search bar ───────────────────────────────────────────────────────────
+  Widget _searchBar() => Container(
+    height: 52,
+    decoration: BoxDecoration(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppTheme.divider),
+      boxShadow: [
+        BoxShadow(
+          color: AppTheme.primary.withOpacity(0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: TextField(
+      controller: _searchCtrl,
+      onChanged: (v) => setState(() => _query = v),
+      style: TextStyle(color: AppTheme.dark, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: "Search plans, supplements...",
+        hintStyle: TextStyle(color: AppTheme.muted, fontSize: 14),
+        prefixIcon: Icon(Icons.search_rounded, color: AppTheme.muted, size: 22),
+        suffixIcon: _query.isNotEmpty
+            ? GestureDetector(
+                onTap: () {
+                  _searchCtrl.clear();
+                  setState(() => _query = '');
+                },
+                child: Icon(
+                  Icons.close_rounded,
+                  color: AppTheme.muted,
+                  size: 20,
+                ),
+              )
+            : null,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
+      ),
+    ),
+  );
 
   // ── Banner — infinite loop, all slides with working buttons ────────────
   Widget _banner() {

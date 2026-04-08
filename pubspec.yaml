@@ -210,6 +210,55 @@ flutter:
     - assets/Mbeginner/core/lever-back.mp4
     - assets/Mbeginner/core/lever-seated.mp4
     - assets/Mbeginner/core/yoga-cobra.mp4  
+    - assets/Mmed/chest/chest-dip.mp4
+    - assets/Mmed/chest/fly-dumbbell.mp4
+    - assets/Mmed/chest/incline-bench-press.mp4
+    - assets/Mmed/back/bent-over-row.mp4
+    - assets/Mmed/back/chin-up.mp4
+    - assets/Mmed/back/lever-pullover.mp4
+    - assets/Mmed/back/smith-shrug.mp4
+    - assets/Mmed/legs/dumbbell-swing.mp4
+    - assets/Mmed/legs/goodmorning.mp4
+    - assets/Mmed/legs/kneeling-curl.mp4
+    - assets/Mmed/legs/lnverse-leg.mp4
+    - assets/Mmed/shoulders/cross-over-reverse-fly.mp4
+    - assets/Mmed/shoulders/dumbbell-shoulder-press.mp4
+    - assets/Mmed/shoulders/rear-fly.mp4
+    - assets/Mmed/shoulders/upright-row.mp4
+    - assets/Mmed/arms/dumbbell-reverse-wrist.mp4
+    - assets/Mmed/arms/ez-barbell-curl.mp4
+    - assets/Mmed/arms/high-pulley-triceps-extension.mp4
+    - assets/Mmed/arms/inner-biceps-curl.mp4
+    - assets/Mmed/core/dead-bug.mp4
+    - assets/Mmed/core/side-plank.mp4
+    - assets/Mmed/core/kneeling-crunch.mp4
+    - assets/Mmed/core/russian-twist.mp4
+    - assets/Madv/chest/cable-low-fly.mp4
+    - assets/Madv/chest/cobra-pushup.mp4
+    - assets/Madv/chest/dumbbell-decline-fly.mp4
+    - assets/Madv/chest/dumbbell-squeeze.mp4
+    - assets/Madv/chest/svend-press.mp4
+    - assets/Madv/back/cable-pulldown.mp4
+    - assets/Madv/back/kneeling-one-arm-pulldown.mp4
+    - assets/Madv/back/pullup.mp4
+    - assets/Madv/back/t-bar.mp4
+    - assets/Madv/legs/deadlift.mp4
+    - assets/Madv/legs/hip-thrust.mp4
+    - assets/Madv/legs/lunges.mp4
+    - assets/Madv/legs/smith-squat.mp4
+    - assets/Madv/shoulders/arnold-press.mp4
+    - assets/Madv/shoulders/one-arm-lateral-raise.mp4
+    - assets/Madv/shoulders/front-raise.mp4
+    - assets/Madv/core/decline-crunch.mp4
+    - assets/Madv/core/elbow-to-knee.mp4
+    - assets/Madv/core/front-plank.mp4
+
+
+
+
+
+
+
   # To add assets to your application, add an assets section, like this:
 
 

@@ -23,6 +23,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
   String? _error;
 
   late AnimationController _fadeController;
+  // ignore: unused_field
   late Animation<double> _fadeAnimation;
 
   // Colors per level
@@ -319,7 +320,8 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
   }
 
   void _onGroupTap(Map<String, dynamic> group) {
-    final name = (group['name'] as String? ?? group['id'] as String? ?? '').toLowerCase();
+    final name = (group['name'] as String? ?? group['id'] as String? ?? '')
+        .toLowerCase();
     Navigator.push(
       context,
       MaterialPageRoute(
