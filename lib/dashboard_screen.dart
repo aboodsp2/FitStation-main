@@ -491,11 +491,12 @@ class _HomeTabState extends State<_HomeTab> {
             GestureDetector(
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                if (ctx.mounted)
+                if (ctx.mounted) {
                   Navigator.of(ctx).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
                     (_) => false,
                   );
+                }
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
