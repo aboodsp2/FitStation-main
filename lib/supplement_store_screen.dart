@@ -183,7 +183,10 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     Icons.arrow_back_ios_new_rounded,
                     color: AppTheme.dark,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  ),
                 ),
                 title: Row(
                   children: [
