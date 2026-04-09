@@ -7,6 +7,87 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app_theme.dart';
 
+// ─── GUEST MANAGER ───────────────────────────────────────────────────────────
+class GuestManager {
+  static final GuestManager _instance = GuestManager._internal();
+  factory GuestManager() => _instance;
+  GuestManager._internal();
+
+  bool _isGuest = false;
+  bool get isGuest => _isGuest;
+
+  void setGuest(bool value) => _isGuest = value;
+
+  /// Shows a sign-in required dialog. Returns true if user is NOT a guest
+  /// (i.e. the action should proceed). Returns false if guest and dialog shown.
+  bool requireAuth(BuildContext context) {
+    if (!_isGuest) return true;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.lock_outline_rounded, color: AppTheme.primary, size: 22),
+            SizedBox(width: 10),
+            Text(
+              'Sign In Required',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                color: AppTheme.dark,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'This feature is only available for registered users.\nSign in or create an account to continue.',
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 13,
+            color: AppTheme.muted,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Maybe later',
+              style: TextStyle(fontFamily: 'Poppins', color: AppTheme.muted),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              GuestManager().setGuest(false);
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
+                (route) => false,
+              );
+            },
+            child: const Text(
+              'Sign In',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return false;
+  }
+}
+
 class AuthFlowHandler extends StatefulWidget {
   const AuthFlowHandler({super.key});
   @override
@@ -490,6 +571,7 @@ class _SignInPageState extends State<SignInPage> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text.trim(),
       );
+      GuestManager().setGuest(false);
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -615,16 +697,12 @@ class _SignInPageState extends State<SignInPage> {
                   ),
             const SizedBox(height: 15),
             GestureDetector(
-              onTap: () async {
-                try {
-                  await FirebaseAuth.instance.signInAnonymously();
-                } catch (_) {}
-                if (context.mounted) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                  );
-                }
+              onTap: () {
+                GuestManager().setGuest(true);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                );
               },
               child: const Text(
                 "Continue as Guest",
@@ -667,16 +745,31 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   bool _showPassword = false;
+  bool _showConfirmPassword = false;
 
   Future<void> _signUp() async {
     if (_emailCtrl.text.isEmpty ||
         _passwordCtrl.text.isEmpty ||
+        _confirmPassCtrl.text.isEmpty ||
         _nameCtrl.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+      return;
+    }
+    if (_passwordCtrl.text != _confirmPassCtrl.text) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
+      return;
+    }
+    if (_passwordCtrl.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters")),
+      );
       return;
     }
     try {
@@ -734,7 +827,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   hint: "Email",
                   controller: _emailCtrl,
                 ),
-                // password with show/hide
+                // Password with show/hide
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,
@@ -761,6 +854,44 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                       hintText: "Password",
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.black45,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                // Confirm Password with show/hide
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 8,
+                  ),
+                  child: TextField(
+                    controller: _confirmPassCtrl,
+                    obscureText: !_showConfirmPassword,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(
+                        Icons.lock_outline,
+                        color: Colors.white,
+                      ),
+                      suffixIcon: GestureDetector(
+                        onTap: () => setState(
+                          () => _showConfirmPassword = !_showConfirmPassword,
+                        ),
+                        child: Icon(
+                          _showConfirmPassword
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
+                          color: Colors.white70,
+                          size: 20,
+                        ),
+                      ),
+                      hintText: "Confirm Password",
                       hintStyle: const TextStyle(color: Colors.white70),
                       filled: true,
                       fillColor: Colors.black45,
@@ -827,10 +958,12 @@ class _Input extends StatelessWidget {
   final String hint;
   final bool isPass;
   final TextEditingController controller;
+  final TextInputType keyboardType;
   const _Input({
     required this.icon,
     required this.hint,
     required this.controller,
+    this.keyboardType = TextInputType.text,
   }) : isPass = false;
 
   @override
@@ -839,6 +972,7 @@ class _Input extends StatelessWidget {
     child: TextField(
       controller: controller,
       obscureText: isPass,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.white),

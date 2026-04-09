@@ -5,7 +5,7 @@ import 'package:fitness_app/level_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'app_theme.dart';
-import 'auth_screen.dart';
+
 import 'supplement_store_screen.dart';
 import 'supplement_models.dart';
 import 'meal_plan_screen.dart';
@@ -13,6 +13,8 @@ import 'consultation_screen.dart';
 import 'cart_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
+import 'my_orders_screen.dart';
+import 'auth_screen.dart' show GuestManager, AuthFlowHandler;
 import 'guest_preview_screen.dart';
 
 // ─── GLOBAL CART STATE ──────────────────────────────────────────────────────
@@ -93,129 +95,6 @@ class CartItem {
   });
 }
 
-// ─── GUEST WALL HELPER (static context) ─────────────────────────────────────
-void _showGuestWallStatic(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (_) => Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 28),
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.lock_outline_rounded,
-              color: AppTheme.accent,
-              size: 34,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Create an Account',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.dark,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Sign up to unlock training plans, meal plans, supplements, consultations and more.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              height: 1.6,
-              color: AppTheme.muted,
-            ),
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Sign Up — It\'s Free',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                side: const BorderSide(color: AppTheme.primary, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Already have an account? Log In',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 // ─── DASHBOARD SHELL ────────────────────────────────────────────────────────
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -226,136 +105,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _tab = 0;
   int _cartCount = 0;
-
-  bool get _isGuest =>
-      FirebaseAuth.instance.currentUser == null ||
-      FirebaseAuth.instance.currentUser!.isAnonymous;
-
-  void _showGuestWall(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 28),
-            // Icon
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.lock_outline_rounded,
-                color: AppTheme.accent,
-                size: 34,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Create an Account',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.dark,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Sign up to unlock training plans, meal plans, supplements, consultations and more.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                height: 1.6,
-                color: AppTheme.muted,
-              ),
-            ),
-            const SizedBox(height: 28),
-            // Sign Up button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Sign Up — It\'s Free',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Log In button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: AppTheme.primary, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Already have an account? Log In',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   void initState() {
@@ -386,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 _HomeTab(onNavToCart: () => setState(() => _tab = 2)),
                 const AboutScreen(),
-                const CartScreen(),
+                const MyOrdersScreen(),
                 const ProfileSection(),
               ],
             ),
@@ -428,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _ni(0, Icons.home_rounded, "Home"),
               _ni(1, Icons.info_outline_rounded, "About"),
-              _nb(2, Icons.shopping_cart_outlined, "Cart", _cartCount),
+              _ni(2, Icons.receipt_long_outlined, "Orders"),
               _ni(3, Icons.person_outline_rounded, "Profile"),
             ],
           ),
@@ -439,13 +188,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _ni(int index, IconData icon, String label) {
     final sel = _tab == index;
+    // Tabs 2 (Orders) and 3 (Profile) require auth
+    final needsAuth = index == 2 || index == 3;
     return GestureDetector(
       onTap: () {
-        if (_isGuest && index == 3) {
-          _showGuestWall(context);
-        } else {
-          setState(() => _tab = index);
-        }
+        if (needsAuth && !GuestManager().requireAuth(context)) return;
+        setState(() => _tab = index);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
@@ -482,11 +230,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sel = _tab == index;
     return GestureDetector(
       onTap: () {
-        if (_isGuest) {
-          _showGuestWall(context);
-        } else {
-          setState(() => _tab = index);
-        }
+        if (!GuestManager().requireAuth(context)) return;
+        setState(() => _tab = index);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
@@ -656,16 +401,46 @@ class _HomeTabState extends State<_HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isGuest =
-        FirebaseAuth.instance.currentUser == null ||
-        FirebaseAuth.instance.currentUser!.isAnonymous;
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 22),
       children: [
         const SizedBox(height: 14),
-        if (isGuest) _guestBanner(context),
-        if (isGuest) const SizedBox(height: 14),
         _header(),
+        // Guest banner
+        if (GuestManager().isGuest) ...[
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () => showGuestSignupSheet(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.accent.withOpacity(0.35)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.visibility_outlined,
+                      color: AppTheme.primary, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'You\'re viewing as Guest — tap to sign up for full access',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppTheme.primary, size: 16),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         _searchBar(),
         const SizedBox(height: 22),
@@ -691,62 +466,71 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-  // ── Guest Banner ─────────────────────────────────────────────────────────
-  Widget _guestBanner(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showGuestWallStatic(context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.lock_outline_rounded,
-              color: AppTheme.accent,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'You\'re browsing as a guest. Sign up to unlock all features.',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 12,
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
+  // ── Header ──────────────────────────────────────────────────────────────
+  Widget _header() {
+    // Guest mode — show simplified header
+    if (GuestManager().isGuest) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.accent.withOpacity(0.4),
+                    width: 1.5,
+                  ),
                 ),
+                child: Icon(Icons.person_outline_rounded,
+                    color: AppTheme.primary, size: 28),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              const SizedBox(width: 13),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Hey, Guest 👋",
+                      style: AppTheme.subheading.copyWith(fontSize: 17)),
+                  Text("Sign in for full access",
+                      style: AppTheme.body.copyWith(fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () {
+              GuestManager().setGuest(false);
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
+                (route) => false,
+              );
+            },
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.accent,
-                borderRadius: BorderRadius.circular(20),
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: const Text(
-                'Sign Up',
+                'Sign In',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   color: Colors.white,
-                  fontSize: 11,
                   fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+        ],
+      );
+    }
 
-  // ── Header ──────────────────────────────────────────────────────────────
-  Widget _header() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
@@ -754,7 +538,6 @@ class _HomeTabState extends State<_HomeTab> {
           .doc(uid)
           .snapshots(),
       builder: (ctx, snap) {
-        final isGuest = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
         String name = "User";
         String? photoUrl;
         if (snap.hasData && snap.data!.exists) {
@@ -810,7 +593,7 @@ class _HomeTabState extends State<_HomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isGuest ? "Welcome, Guest 👋" : "Hey, $name 👋",
+                      "Hey, $name 👋",
                       style: AppTheme.subheading.copyWith(fontSize: 17),
                     ),
                     Text(
@@ -823,15 +606,12 @@ class _HomeTabState extends State<_HomeTab> {
             ),
             GestureDetector(
               onTap: () async {
-                final isGuest =
-                    FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
                 await FirebaseAuth.instance.signOut();
-                if (ctx.mounted) {
+                if (ctx.mounted)
                   Navigator.of(ctx).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
                     (_) => false,
                   );
-                }
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -1016,46 +796,7 @@ class _HomeTabState extends State<_HomeTab> {
                                   const SizedBox(height: 12),
                                   GestureDetector(
                                     onTap: () {
-                                      final isGuest =
-                                          FirebaseAuth.instance.currentUser ==
-                                              null ||
-                                          FirebaseAuth
-                                              .instance
-                                              .currentUser!
-                                              .isAnonymous;
                                       final action = b["action"] as String;
-                                      if (isGuest) {
-                                        switch (action) {
-                                          case "supplements":
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const GuestSupplementsPreview(),
-                                              ),
-                                            );
-                                            break;
-                                          case "meal":
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const GuestMealPreview(),
-                                              ),
-                                            );
-                                            break;
-                                          case "consultation":
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const GuestConsultationPreview(),
-                                              ),
-                                            );
-                                            break;
-                                        }
-                                        return;
-                                      }
                                       switch (action) {
                                         case "supplements":
                                           Navigator.push(
@@ -1288,13 +1029,6 @@ class _HomeTabState extends State<_HomeTab> {
       );
     }
 
-    const screens = <Widget>[
-      LevelSelectionScreen(),
-      SupplementStoreScreen(),
-      MealPlanScreen(),
-      ConsultationScreen(),
-    ];
-
     const cardGradients = [
       [Color(0xFF3B2314), Color(0xFF7B5035)],
       [Color(0xFF1C2A1E), Color(0xFF3A5C3E)],
@@ -1318,26 +1052,31 @@ class _HomeTabState extends State<_HomeTab> {
         final cols = cardGradients[idx % cardGradients.length];
         return GestureDetector(
           onTap: () {
-            final isGuest =
-                FirebaseAuth.instance.currentUser == null ||
-                FirebaseAuth.instance.currentUser!.isAnonymous;
-            if (isGuest) {
-              const guestPreviews = <Widget>[
-                GuestTrainingPreview(),
-                GuestSupplementsPreview(),
-                GuestMealPreview(),
-                GuestConsultationPreview(),
-              ];
-              Navigator.push(
-                ctx,
-                MaterialPageRoute(builder: (_) => guestPreviews[idx]),
-              );
-            } else {
-              Navigator.push(
-                ctx,
-                MaterialPageRoute(builder: (_) => screens[idx]),
-              );
+            final isGuest = GuestManager().isGuest;
+            Widget screen;
+            switch (idx) {
+              case 0: // Training Plan
+                screen = isGuest
+                    ? const GuestTrainingPreview()
+                    : const LevelSelectionScreen();
+                break;
+              case 1: // Supplements — guests see real store (cart allowed, checkout blocked)
+                screen = const SupplementStoreScreen();
+                break;
+              case 2: // Meal Plan
+                screen = isGuest
+                    ? const GuestMealPreview()
+                    : const MealPlanScreen();
+                break;
+              case 3: // Consultation
+                screen = isGuest
+                    ? const GuestConsultationPreview()
+                    : const ConsultationScreen();
+                break;
+              default:
+                screen = const LevelSelectionScreen();
             }
+            Navigator.push(ctx, MaterialPageRoute(builder: (_) => screen));
           },
           child: Container(
             decoration: BoxDecoration(

@@ -4,6 +4,9 @@ import 'dashboard_screen.dart';
 import 'supplement_models.dart';
 import 'supplement_store_screen.dart';
 import 'checkout_screen.dart';
+import 'my_orders_screen.dart';
+import 'auth_screen.dart' show GuestManager;
+import 'guest_preview_screen.dart' show showGuestSignupSheet;
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -114,11 +117,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _checkout(double finalTotal) {
+    if (GuestManager().isGuest) {
+      showGuestSignupSheet(context);
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => CheckoutScreen(
           total: finalTotal,
+          cartItems: List.from(CartManager().items),
           onOrderPlaced: () {
             final ids = CartManager().items.map((i) => i.id).toList();
             for (final id in ids) CartManager().removeItem(id);

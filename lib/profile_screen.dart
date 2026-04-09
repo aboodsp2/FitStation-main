@@ -22,6 +22,7 @@ class _ProfileSectionState extends State<ProfileSection> {
   final _weightCtrl = TextEditingController();
   final _heightCtrl = TextEditingController();
   final _nationalityCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   String _gender = "Male";
   String _goal = "Weight Loss";
 
@@ -49,6 +50,7 @@ class _ProfileSectionState extends State<ProfileSection> {
       _weightCtrl.text = '${d['weight'] ?? ''}';
       _heightCtrl.text = '${d['height'] ?? ''}';
       _nationalityCtrl.text = d['nationality'] ?? '';
+      _phoneCtrl.text = d['phone'] ?? '';
       _gender = d['gender'] ?? 'Male';
       _goal = d['goal'] ?? 'Weight Loss';
       _savedPhotoUrl = d['photoUrl'];
@@ -118,6 +120,7 @@ class _ProfileSectionState extends State<ProfileSection> {
         'nationality': _nationalityCtrl.text.trim(),
         'gender': _gender,
         'goal': _goal,
+        'phone': _phoneCtrl.text.trim(),
       };
       if (newUrl != null) data['photoUrl'] = newUrl;
 
@@ -176,6 +179,7 @@ class _ProfileSectionState extends State<ProfileSection> {
     _weightCtrl.dispose();
     _heightCtrl.dispose();
     _nationalityCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -354,6 +358,19 @@ class _ProfileSectionState extends State<ProfileSection> {
                       TextInputType.name,
                     )
                   : _row(Icons.person_outline_rounded, "Name", _nameCtrl.text),
+              _div(),
+              _editing
+                  ? _editField(
+                      Icons.phone_outlined,
+                      "Phone Number",
+                      _phoneCtrl,
+                      TextInputType.phone,
+                    )
+                  : _row(
+                      Icons.phone_outlined,
+                      "Phone",
+                      _phoneCtrl.text.isEmpty ? "Not set" : _phoneCtrl.text,
+                    ),
               _div(),
               _editing
                   ? GestureDetector(

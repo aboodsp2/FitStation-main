@@ -4,6 +4,8 @@ import 'app_theme.dart';
 import 'dashboard_screen.dart';
 import 'cart_screen.dart';
 import 'supplement_models.dart';
+import 'auth_screen.dart' show GuestManager;
+import 'guest_preview_screen.dart' show showGuestSignupSheet;
 
 // local alias so existing code using _SupplementImage still works
 typedef _SupplementImage = SupplementImage;
@@ -60,6 +62,10 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
   }
 
   void _addToCart(SupplementItem item, {int qty = 1}) {
+    if (GuestManager().isGuest) {
+      showGuestSignupSheet(context);
+      return;
+    }
     for (int i = 0; i < qty; i++) {
       CartManager().addItem(
         CartItem(
@@ -747,7 +753,31 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     ),
                   ),
                 ),
-                if (item.isOnSale)
+                // Out of stock overlay
+                if (item.quantity == 0)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'OUT OF\nSTOCK',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
+                            letterSpacing: 0.8,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (item.isOnSale && item.quantity > 0)
                   Positioned(
                     top: 4,
                     right: 4,
@@ -824,25 +854,65 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
             ),
             const SizedBox(height: 6),
             GestureDetector(
-              onTap: () => _addToCart(item),
+              onTap: item.quantity == 0 ? null : () => _addToCart(item),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.primary),
+                  color: item.quantity == 0
+                      ? AppTheme.divider
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: item.quantity == 0
+                        ? AppTheme.divider
+                        : AppTheme.primary,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
-                  child: Text(
-                    "ADD TO CART",
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
+                child: Center(
+                  child: item.quantity == 0
+                      ? Text(
+                          "OUT OF STOCK",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.muted,
+                            letterSpacing: 0.8,
+                          ),
+                        )
+                      : GuestManager().isGuest
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.lock_rounded,
+                              size: 9,
+                              color: AppTheme.primary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "SIGN UP TO ADD",
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          "ADD TO CART",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -1192,68 +1262,94 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                   const SizedBox(height: 24),
 
                   // qty selector + add to cart
-                  Row(
-                    children: [
-                      // qty controls
-                      Container(
-                        decoration: AppTheme.card(radius: 30),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _qtyBtn(Icons.remove, () {
-                              if (_qty > 1) setState(() => _qty--);
-                            }),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              child: Text(
-                                "$_qty",
-                                style: AppTheme.subheading.copyWith(
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            _qtyBtn(Icons.add, () => setState(() => _qty++)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      // add to cart button
-                      Expanded(
-                        child: SizedBox(
+                  item.quantity == 0
+                      ? Container(
+                          width: double.infinity,
                           height: 52,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              elevation: 4,
-                              shadowColor: AppTheme.primary.withOpacity(0.35),
-                            ),
-                            onPressed: () {
-                              widget.onAddToCart(_qty);
-                              Navigator.pop(context);
-                            },
+                          decoration: BoxDecoration(
+                            color: AppTheme.divider,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Center(
                             child: Text(
-                              "Add $_qty to Cart",
-                              style: const TextStyle(
+                              "OUT OF STOCK",
+                              style: TextStyle(
                                 fontFamily: 'Poppins',
-                                color: Colors.white,
+                                color: AppTheme.muted,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
+                                letterSpacing: 0.8,
                               ),
                             ),
                           ),
+                        )
+                      : Row(
+                          children: [
+                            // qty controls
+                            Container(
+                              decoration: AppTheme.card(radius: 30),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _qtyBtn(Icons.remove, () {
+                                    if (_qty > 1) setState(() => _qty--);
+                                  }),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                    ),
+                                    child: Text(
+                                      "$_qty",
+                                      style: AppTheme.subheading.copyWith(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  _qtyBtn(
+                                    Icons.add,
+                                    () => setState(() => _qty++),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // add to cart button
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    elevation: 4,
+                                    shadowColor: AppTheme.primary.withOpacity(
+                                      0.35,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    widget.onAddToCart(_qty);
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text(
+                                    "Add $_qty to Cart",
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
 
                   const SizedBox(height: 30),
                 ],
@@ -1312,6 +1408,10 @@ class _CategoryScreenState extends State<_CategoryScreen> {
   }
 
   void _addToCart(SupplementItem item) {
+    if (GuestManager().isGuest) {
+      showGuestSignupSheet(context);
+      return;
+    }
     final qty = _qtys[item.id] ?? 1;
     for (int i = 0; i < qty; i++) {
       CartManager().addItem(
@@ -1531,71 +1631,98 @@ class _CategoryScreenState extends State<_CategoryScreen> {
                       ),
                     const SizedBox(height: 8),
                     // ── Qty + BUY NOW row ──────────────────────────────────
-                    Row(
-                      children: [
-                        // qty controls
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.divider),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _qtyBtn(Icons.remove, () {
-                                if (qty > 1)
-                                  setState(() => _qtys[item.id] = qty - 1);
-                              }),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                child: Text(
-                                  "$qty",
-                                  style: AppTheme.subheading.copyWith(
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              _qtyBtn(
-                                Icons.add,
-                                () => setState(() => _qtys[item.id] = qty + 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // buy now
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _addToCart(item),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 9),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  "BUY NOW",
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
+                    item.quantity == 0
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            decoration: BoxDecoration(
+                              color: AppTheme.divider,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                "OUT OF STOCK",
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  color: AppTheme.muted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
+                          )
+                        : Row(
+                            children: [
+                              // qty controls
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.divider),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _qtyBtn(Icons.remove, () {
+                                      if (qty > 1)
+                                        setState(
+                                          () => _qtys[item.id] = qty - 1,
+                                        );
+                                    }),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                      ),
+                                      child: Text(
+                                        "$qty",
+                                        style: AppTheme.subheading.copyWith(
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    _qtyBtn(
+                                      Icons.add,
+                                      () => setState(
+                                        () => _qtys[item.id] = qty + 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // buy now
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _addToCart(item),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 9,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        "BUY NOW",
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -1651,6 +1778,10 @@ class _DealsScreenState extends State<DealsScreen> {
   }
 
   void _addToCart(SupplementItem item) {
+    if (GuestManager().isGuest) {
+      showGuestSignupSheet(context);
+      return;
+    }
     final qty = _qtys[item.id] ?? 1;
     for (int i = 0; i < qty; i++) {
       CartManager().addItem(
@@ -1865,77 +1996,106 @@ class _DealsScreenState extends State<DealsScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: AppTheme.divider,
+                                item.quantity == 0
+                                    ? Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 9,
                                         ),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 2,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _qtyBtn(Icons.remove, () {
-                                            if (qty > 1)
-                                              setState(
-                                                () => _qtys[item.id] = qty - 1,
-                                              );
-                                          }),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                            ),
-                                            child: Text(
-                                              "$qty",
-                                              style: AppTheme.subheading
-                                                  .copyWith(fontSize: 13),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.divider,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            "OUT OF STOCK",
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              color: AppTheme.muted,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
-                                          _qtyBtn(
-                                            Icons.add,
-                                            () => setState(
-                                              () => _qtys[item.id] = qty + 1,
+                                        ),
+                                      )
+                                    : Row(
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: AppTheme.divider,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                              vertical: 2,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                _qtyBtn(Icons.remove, () {
+                                                  if (qty > 1)
+                                                    setState(
+                                                      () => _qtys[item.id] =
+                                                          qty - 1,
+                                                    );
+                                                }),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                      ),
+                                                  child: Text(
+                                                    "$qty",
+                                                    style: AppTheme.subheading
+                                                        .copyWith(fontSize: 13),
+                                                  ),
+                                                ),
+                                                _qtyBtn(
+                                                  Icons.add,
+                                                  () => setState(
+                                                    () => _qtys[item.id] =
+                                                        qty + 1,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () => _addToCart(item),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 9,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primary,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: const Center(
+                                                  child: Text(
+                                                    "BUY NOW",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      color: Colors.white,
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => _addToCart(item),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 9,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primary,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: const Center(
-                                            child: Text(
-                                              "BUY NOW",
-                                              style: TextStyle(
-                                                fontFamily: 'Poppins',
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
                           ),
@@ -1990,6 +2150,10 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
   }
 
   void _addToCart(SupplementItem item) {
+    if (GuestManager().isGuest) {
+      showGuestSignupSheet(context);
+      return;
+    }
     CartManager().addItem(
       CartItem(
         id: item.id,
@@ -2130,21 +2294,27 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () => _addToCart(item),
+                                  onTap: item.quantity == 0
+                                      ? null
+                                      : () => _addToCart(item),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary,
+                                      color: item.quantity == 0
+                                          ? AppTheme.divider
+                                          : AppTheme.primary,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
-                                      "ADD",
+                                    child: Text(
+                                      item.quantity == 0 ? "SOLD OUT" : "ADD",
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
-                                        color: Colors.white,
+                                        color: item.quantity == 0
+                                            ? AppTheme.muted
+                                            : Colors.white,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                       ),

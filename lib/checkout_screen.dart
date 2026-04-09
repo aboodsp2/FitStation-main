@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'app_theme.dart';
 import 'dashboard_screen.dart';
+import 'my_orders_screen.dart';
 
 const _kGoogleApiKey = 'AIzaSyAvMxfgkSU50T6fCgHGTI4cmsjt5GVa-PQ';
 
@@ -492,10 +496,12 @@ class _MapPickerState extends State<_MapPicker> {
 class CheckoutScreen extends StatefulWidget {
   final double total;
   final VoidCallback onOrderPlaced;
+  final List<CartItem> cartItems;
   const CheckoutScreen({
     super.key,
     required this.total,
     required this.onOrderPlaced,
+    required this.cartItems,
   });
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -505,6 +511,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   // Default to Amman, Jordan
   LatLng _pickedLatLng = const LatLng(31.9539, 35.9106);
@@ -519,10 +526,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _cvvCtrl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadPhone();
+  }
+
+  Future<void> _loadPhone() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    if (!mounted) return;
+    final phone = doc.data()?['phone'] as String? ?? '';
+    if (phone.isNotEmpty) _phoneCtrl.text = phone;
+  }
+
+  @override
   void dispose() {
     _addressCtrl.dispose();
     _cityCtrl.dispose();
     _notesCtrl.dispose();
+    _phoneCtrl.dispose();
     _cardNumCtrl.dispose();
     _cardNameCtrl.dispose();
     _expiryCtrl.dispose();
@@ -557,6 +583,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _snack("Please set your delivery address on the map.", Colors.redAccent);
       return;
     }
+    if (_phoneCtrl.text.trim().isEmpty) {
+      _snack("Please enter your phone number.", Colors.redAccent);
+      return;
+    }
     if (_payMethod == 'visa') {
       final num = _cardNumCtrl.text.replaceAll(' ', '');
       if (num.length < 16) {
@@ -574,7 +604,90 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     setState(() => _placing = true);
-    await Future.delayed(const Duration(seconds: 2));
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _snack("You must be logged in to place an order.", Colors.redAccent);
+        setState(() => _placing = false);
+        return;
+      }
+
+      final orderId = (1000 + Random().nextInt(9000)).toString();
+      final address = '${_addressCtrl.text.trim()}, ${_cityCtrl.text.trim()}';
+      final now = DateTime.now();
+
+      final orderData = {
+        'id': orderId,
+        'userId': user.uid,
+        'userEmail': user.email ?? '',
+        'phone': _phoneCtrl.text.trim(),
+        'date': Timestamp.fromDate(now),
+        'total': widget.total,
+        'status': 'processing',
+        'address': address,
+        'payMethod': _payMethod,
+        'items': widget.cartItems
+            .map(
+              (i) => {
+                'name': i.name,
+                'qty': i.quantity,
+                'price': i.price,
+                'imageUrl': i.imageUrl,
+              },
+            )
+            .toList(),
+      };
+
+      // Save to Firestore: orders/{userId}/userOrders/{orderId}
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(user.uid)
+          .collection('userOrders')
+          .doc(orderId)
+          .set(orderData);
+
+      // Deduct stock quantities from supplements collection using a transaction
+      final db = FirebaseFirestore.instance;
+      await db.runTransaction((txn) async {
+        for (final cartItem in widget.cartItems) {
+          final ref = db.collection('supplements').doc(cartItem.id);
+          final snap = await txn.get(ref);
+          if (snap.exists) {
+            final current = (snap.data()?['quantity'] as num?)?.toInt() ?? 0;
+            final newQty = (current - cartItem.quantity).clamp(0, 99999);
+            txn.update(ref, {'quantity': newQty});
+          }
+        }
+      });
+
+      // Also keep local OrderManager in sync for this session
+      OrderManager().placeOrder(
+        Order(
+          id: orderId,
+          date: now,
+          total: widget.total,
+          items: widget.cartItems
+              .map(
+                (i) => OrderLineItem(
+                  name: i.name,
+                  qty: i.quantity,
+                  price: i.price,
+                  imageUrl: i.imageUrl,
+                ),
+              )
+              .toList(),
+          status: OrderStatus.processing,
+          address: address,
+          payMethod: _payMethod,
+          phone: _phoneCtrl.text.trim(),
+        ),
+      );
+    } catch (e) {
+      _snack("Failed to place order. Please try again.", Colors.redAccent);
+      setState(() => _placing = false);
+      return;
+    }
 
     widget.onOrderPlaced();
     if (!mounted) return;
@@ -711,6 +824,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Icons.note_outlined,
                 TextInputType.text,
                 maxLines: 2,
+              ),
+              const SizedBox(height: 10),
+              _input(
+                _phoneCtrl,
+                "Phone number *",
+                Icons.phone_outlined,
+                TextInputType.phone,
               ),
 
               const SizedBox(height: 28),
