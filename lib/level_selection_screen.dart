@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'training_plan_screen_new.dart';
+import 'app_theme.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
   const LevelSelectionScreen({super.key});
@@ -25,9 +26,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       title: 'Beginner',
       subtitle: 'Start your journey',
       description:
-          'Simple, foundational exercises designed to build core\nstrength and establish healthy movement patterns.',
+          'Simple, foundational exercises designed to build core strength and establish healthy movement patterns.',
       icon: Icons.self_improvement_rounded,
-      gradient: [Color(0xFF2ECC71), Color(0xFF1A7A45)],
+      accent: const Color(0xFF6BAF6B),
       tag: 'beginner',
       badge: 'LEVEL 1',
     ),
@@ -35,9 +36,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       title: 'Intermediate',
       subtitle: 'Level up your game',
       description:
-          'Challenging routines that push your limits and accelerate\nprogress with compound movements and higher intensity.',
+          'Challenging routines that push your limits and accelerate progress with compound movements and higher intensity.',
       icon: Icons.fitness_center_rounded,
-      gradient: [Color(0xFFF39C12), Color(0xFF9A5E00)],
+      accent: AppTheme.accent,
       tag: 'intermediate',
       badge: 'LEVEL 2',
     ),
@@ -45,9 +46,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       title: 'Advanced',
       subtitle: 'Dominate every rep',
       description:
-          'High-intensity programming built for experienced athletes\nready to push beyond their perceived limits.',
+          'High-intensity programming built for experienced athletes ready to push beyond their perceived limits.',
       icon: Icons.local_fire_department_rounded,
-      gradient: [Color(0xFFE74C3C), Color(0xFF8B0000)],
+      accent: AppTheme.primary,
       tag: 'advanced',
       badge: 'LEVEL 3',
     ),
@@ -58,21 +59,20 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     );
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 600),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOut,
     );
     _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
         );
-
     _fetchGender();
   }
 
@@ -117,25 +117,23 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       PageRouteBuilder(
         pageBuilder: (_, animation, __) =>
             TrainingPlanScreen(level: level, gender: _gender ?? 'male'),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(0.05, 0),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    ),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
                   ),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 400),
+                ),
+            child: child,
+          ),
+        ),
+        transitionDuration: const Duration(milliseconds: 350),
       ),
     );
   }
@@ -143,11 +141,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppTheme.background,
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFF39C12)),
-            )
+          ? Center(child: CircularProgressIndicator(color: AppTheme.accent))
           : CustomScrollView(
               slivers: [
                 _buildSliverAppBar(),
@@ -157,12 +153,12 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                     child: SlideTransition(
                       position: _slideAnimation,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildGenderBadge(),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
                             ..._buildLevelCards(),
                           ],
                         ),
@@ -179,18 +175,19 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     return SliverAppBar(
       expandedHeight: 160,
       pinned: true,
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppTheme.background,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: AppTheme.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
+            color: AppTheme.primary,
             size: 16,
           ),
         ),
@@ -198,44 +195,52 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       ),
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-        title: const Text(
+        title: Text(
           'Choose Your\nLevel',
           style: TextStyle(
-            fontSize: 22,
+            fontFamily: 'Poppins',
+            fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: -0.5,
+            color: AppTheme.dark,
+            letterSpacing: -0.3,
             height: 1.2,
           ),
         ),
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1A1A1A), Color(0xFF0D0D0D)],
-                ),
-              ),
-            ),
+            Container(color: AppTheme.background),
+            // Subtle warm gradient top-right
             Positioned(
               right: -20,
               top: -20,
               child: Container(
-                width: 180,
-                height: 180,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFF39C12).withOpacity(0.15),
-                      Colors.transparent,
-                    ],
-                  ),
+                  color: AppTheme.accent.withOpacity(0.09),
                 ),
               ),
+            ),
+            Positioned(
+              right: 40,
+              top: 30,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.primary.withOpacity(0.06),
+                ),
+              ),
+            ),
+            // Bottom divider
+            Positioned(
+              bottom: 0,
+              left: 20,
+              right: 20,
+              child: Divider(color: AppTheme.divider, height: 1),
             ),
           ],
         ),
@@ -246,36 +251,28 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   Widget _buildGenderBadge() {
     final isFemale = _gender == 'female';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isFemale
-            ? const Color(0xFFE91E8C).withOpacity(0.12)
-            : const Color(0xFF2196F3).withOpacity(0.12),
+        color: AppTheme.accent.withOpacity(0.12),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: isFemale
-              ? const Color(0xFFE91E8C).withOpacity(0.3)
-              : const Color(0xFF2196F3).withOpacity(0.3),
-        ),
+        border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isFemale ? Icons.female_rounded : Icons.male_rounded,
+            color: AppTheme.accent,
             size: 16,
-            color: isFemale ? const Color(0xFFE91E8C) : const Color(0xFF2196F3),
           ),
           const SizedBox(width: 6),
           Text(
-            'Plans for ${isFemale ? 'Women' : 'Men'}',
+            isFemale ? 'Plans for Women' : 'Plans for Men',
             style: TextStyle(
+              fontFamily: 'Poppins',
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isFemale
-                  ? const Color(0xFFE91E8C)
-                  : const Color(0xFF2196F3),
-              letterSpacing: 0.3,
+              color: AppTheme.primary,
             ),
           ),
         ],
@@ -284,21 +281,20 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   }
 
   List<Widget> _buildLevelCards() {
-    return List.generate(_levels.length, (index) {
-      final level = _levels[index];
+    return _levels.asMap().entries.map((entry) {
+      final index = entry.key;
+      final level = entry.value;
       return TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
-        duration: Duration(milliseconds: 500 + index * 120),
+        duration: Duration(milliseconds: 400 + index * 100),
         curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          return Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, 30 * (1 - value)),
-              child: child,
-            ),
-          );
-        },
+        builder: (context, value, child) => Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _LevelCard(
@@ -307,9 +303,11 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
           ),
         ),
       );
-    });
+    }).toList();
   }
 }
+
+// ── Level Card ───────────────────────────────────────────────────────
 
 class _LevelCard extends StatefulWidget {
   final _LevelData data;
@@ -324,7 +322,6 @@ class _LevelCard extends StatefulWidget {
 class _LevelCardState extends State<_LevelCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _pressController;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -336,7 +333,6 @@ class _LevelCardState extends State<_LevelCard>
       upperBound: 1.0,
       value: 1.0,
     );
-    _scaleAnimation = _pressController;
   }
 
   @override
@@ -355,78 +351,60 @@ class _LevelCardState extends State<_LevelCard>
       },
       onTapCancel: () => _pressController.forward(),
       child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) =>
-            Transform.scale(scale: _scaleAnimation.value, child: child),
+        animation: _pressController,
+        builder: (_, child) =>
+            Transform.scale(scale: _pressController.value, child: child),
         child: Container(
           decoration: BoxDecoration(
+            color: AppTheme.surface,
             borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.data.gradient[0].withOpacity(0.18),
-                widget.data.gradient[1].withOpacity(0.08),
-              ],
-            ),
-            border: Border.all(
-              color: widget.data.gradient[0].withOpacity(0.3),
-              width: 1,
-            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 5),
+              ),
+            ],
+            border: Border.all(color: AppTheme.divider),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Stack(
               children: [
-                // Subtle glow effect
+                // Subtle accent tint in top-right corner
                 Positioned(
-                  right: -30,
-                  top: -30,
+                  right: -20,
+                  top: -20,
                   child: Container(
-                    width: 120,
-                    height: 120,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          widget.data.gradient[0].withOpacity(0.25),
-                          Colors.transparent,
-                        ],
-                      ),
+                      color: widget.data.accent.withOpacity(0.08),
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon Container
+                      // Icon
                       Container(
-                        width: 64,
-                        height: 64,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: widget.data.gradient,
-                          ),
+                          color: widget.data.accent.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: widget.data.gradient[0].withOpacity(0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
                         ),
                         child: Icon(
                           widget.data.icon,
-                          color: Colors.white,
-                          size: 30,
+                          color: widget.data.accent,
+                          size: 28,
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Text
+                      // Text content
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,79 +413,82 @@ class _LevelCardState extends State<_LevelCard>
                               children: [
                                 Text(
                                   widget.data.title,
-                                  style: const TextStyle(
-                                    fontSize: 20,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
+                                    color: AppTheme.dark,
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
+                                // Level badge
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 7,
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: widget.data.gradient[0].withOpacity(
-                                      0.2,
-                                    ),
+                                    color: widget.data.accent.withOpacity(0.12),
                                     borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
-                                      color: widget.data.gradient[0]
-                                          .withOpacity(0.4),
+                                      color: widget.data.accent.withOpacity(
+                                        0.3,
+                                      ),
                                     ),
                                   ),
                                   child: Text(
                                     widget.data.badge,
                                     style: TextStyle(
+                                      fontFamily: 'Poppins',
                                       fontSize: 9,
                                       fontWeight: FontWeight.w700,
-                                      color: widget.data.gradient[0],
+                                      color: widget.data.accent,
                                       letterSpacing: 0.8,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Text(
                               widget.data.subtitle,
                               style: TextStyle(
+                                fontFamily: 'Poppins',
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: widget.data.gradient[0].withOpacity(0.8),
-                                letterSpacing: 0.2,
+                                fontWeight: FontWeight.w600,
+                                color: widget.data.accent,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               widget.data.description,
                               style: TextStyle(
+                                fontFamily: 'Poppins',
                                 fontSize: 12,
-                                height: 1.5,
-                                color: Colors.white.withOpacity(0.55),
+                                height: 1.55,
+                                color: AppTheme.muted,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       // Arrow
                       Container(
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: widget.data.gradient[0].withOpacity(0.15),
+                          color: widget.data.accent.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: widget.data.gradient[0].withOpacity(0.3),
+                            color: widget.data.accent.withOpacity(0.25),
                           ),
                         ),
                         child: Icon(
                           Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: widget.data.gradient[0],
+                          size: 13,
+                          color: widget.data.accent,
                         ),
                       ),
                     ],
@@ -527,7 +508,7 @@ class _LevelData {
   final String subtitle;
   final String description;
   final IconData icon;
-  final List<Color> gradient;
+  final Color accent;
   final String tag;
   final String badge;
 
@@ -536,7 +517,7 @@ class _LevelData {
     required this.subtitle,
     required this.description,
     required this.icon,
-    required this.gradient,
+    required this.accent,
     required this.tag,
     required this.badge,
   });

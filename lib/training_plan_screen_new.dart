@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'exercise_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'app_theme.dart';
 
 class TrainingPlanScreen extends StatefulWidget {
   final String level;
@@ -23,19 +24,16 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
   String? _error;
 
   late AnimationController _fadeController;
-  // ignore: unused_field
   late Animation<double> _fadeAnimation;
 
-  // Colors per level
-  Map<String, List<Color>> get _levelColors => {
-    'beginner': [const Color(0xFF2ECC71), const Color(0xFF1A7A45)],
-    'intermediate': [const Color(0xFFF39C12), const Color(0xFF9A5E00)],
-    'advanced': [const Color(0xFFE74C3C), const Color(0xFF8B0000)],
+  // Level badge colors — warm tones matching AppTheme
+  Map<String, Color> get _levelColor => {
+    'beginner': const Color(0xFF6BAF6B), // soft green
+    'intermediate': AppTheme.accent, // gold
+    'advanced': AppTheme.primary, // deep brown
   };
 
-  List<Color> get _accentColors =>
-      _levelColors[widget.level] ??
-      [const Color(0xFFF39C12), const Color(0xFF9A5E00)];
+  Color get _accent => _levelColor[widget.level] ?? AppTheme.accent;
 
   // Icon mapping per muscle group
   static const Map<String, IconData> _muscleIcons = {
@@ -48,22 +46,12 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
     'default': Icons.fitness_center_rounded,
   };
 
-  // Color palette for muscle group cards
-  static const List<List<Color>> _cardPalette = [
-    [Color(0xFF6C5CE7), Color(0xFF3A1F8F)],
-    [Color(0xFF00B894), Color(0xFF006B55)],
-    [Color(0xFFE17055), Color(0xFF8B3500)],
-    [Color(0xFF0984E3), Color(0xFF024D87)],
-    [Color(0xFFD63031), Color(0xFF7A0000)],
-    [Color(0xFF00CEC9), Color(0xFF006A67)],
-  ];
-
   @override
   void initState() {
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
@@ -80,9 +68,6 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
 
   Future<void> _loadMuscleGroups() async {
     try {
-      // ── Firestore path: training_plans/{gender}/{level}/muscle_groups (collection)
-      // Each doc: { name: "Chest", exerciseCount: 4, exercises: [...] }
-      // Adjust the path below to match YOUR Firestore structure.
       final snapshot = await FirebaseFirestore.instance
           .collection('training_plans')
           .doc(widget.gender)
@@ -90,13 +75,11 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
           .get();
 
       if (snapshot.docs.isEmpty) {
-        // Fallback: try a flat collection with filtering
         final fallback = await FirebaseFirestore.instance
             .collection('training_plans')
             .where('gender', isEqualTo: widget.gender)
             .where('level', isEqualTo: widget.level)
             .get();
-
         setState(() {
           _muscleGroups = fallback.docs
               .map((d) => {'id': d.id, ...d.data()})
@@ -111,7 +94,6 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
           _loading = false;
         });
       }
-
       _fadeController.forward();
     } catch (e) {
       setState(() {
@@ -134,22 +116,19 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
     }
   }
 
-  IconData _iconForMuscle(String name) {
-    return _muscleIcons[name.toLowerCase()] ?? _muscleIcons['default']!;
-  }
+  IconData _iconForMuscle(String name) =>
+      _muscleIcons[name.toLowerCase()] ?? _muscleIcons['default']!;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
           _buildAppBar(),
           if (_loading)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFF39C12)),
-              ),
+            SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: _accent)),
             )
           else if (_error != null)
             SliverFillRemaining(child: _buildError())
@@ -157,7 +136,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
             SliverFillRemaining(child: _buildEmpty())
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => _buildMuscleCard(index),
@@ -172,47 +151,49 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 210,
       pinned: true,
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppTheme.background,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: AppTheme.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
+            color: AppTheme.primary,
             size: 16,
           ),
         ),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
+        titlePadding: const EdgeInsets.only(left: 20, bottom: 18),
         title: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '$_levelLabel Plan',
-              style: const TextStyle(
-                fontSize: 22,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: -0.5,
+                color: AppTheme.dark,
+                letterSpacing: -0.3,
               ),
             ),
             Text(
               '${widget.gender == 'female' ? 'Women' : 'Men'} • ${_muscleGroups.length} muscle groups',
               style: TextStyle(
-                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withOpacity(0.55),
-                letterSpacing: 0.2,
+                color: AppTheme.muted,
               ),
             ),
           ],
@@ -220,65 +201,75 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    _accentColors[0].withOpacity(0.2),
-                    const Color(0xFF0D0D0D),
-                  ],
-                  stops: const [0.0, 0.7],
-                ),
-              ),
-            ),
+            // Warm cream base
+            Container(color: AppTheme.background),
+            // Subtle top gradient
             Positioned(
-              right: -40,
-              top: -40,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 210,
               child: Container(
-                width: 220,
-                height: 220,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _accentColors[0].withOpacity(0.2),
-                      Colors.transparent,
-                    ],
+                  gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [_accent.withOpacity(0.12), AppTheme.background],
                   ),
                 ),
               ),
             ),
+            // Decorative circle
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _accent.withOpacity(0.08),
+                ),
+              ),
+            ),
+            // Level badge
             Positioned(
               right: 20,
-              top: 60,
+              top: 70,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 8,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: _accentColors),
+                  color: _accent,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: _accentColors[0].withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: _accent.withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Text(
                   _levelLabel.toUpperCase(),
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontFamily: 'Poppins',
+                    fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: 1.5,
                   ),
                 ),
               ),
+            ),
+            // Divider line at bottom
+            Positioned(
+              bottom: 0,
+              left: 20,
+              right: 20,
+              child: Divider(color: AppTheme.divider, thickness: 1),
             ),
           ],
         ),
@@ -291,28 +282,25 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
     final name =
         (group['name'] as String?) ?? group['id'] as String? ?? 'Unknown';
     final exerciseCount = group['exerciseCount'] as int? ?? 0;
-    final colors = _cardPalette[index % _cardPalette.length];
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 400 + index * 80),
+      duration: Duration(milliseconds: 350 + index * 70),
       curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 24 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: child,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 14),
         child: _MuscleGroupCard(
           name: name,
           exerciseCount: exerciseCount,
           icon: _iconForMuscle(name),
-          colors: colors,
+          accent: _accent,
           onTap: () => _onGroupTap(group),
         ),
       ),
@@ -341,29 +329,11 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 64,
-              color: Colors.red.withOpacity(0.6),
-            ),
+            Icon(Icons.error_outline_rounded, size: 64, color: AppTheme.muted),
             const SizedBox(height: 16),
-            const Text(
-              'Failed to load plans',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+            Text('Something went wrong', style: AppTheme.subheading),
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.white.withOpacity(0.5),
-              ),
-            ),
+            Text(_error!, textAlign: TextAlign.center, style: AppTheme.body),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
@@ -371,7 +341,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
                 _loadMuscleGroups();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColors[0],
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -383,7 +353,10 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
               ),
               child: const Text(
                 'Retry',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -402,26 +375,15 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
             Icon(
               Icons.fitness_center_rounded,
               size: 72,
-              color: _accentColors[0].withOpacity(0.4),
+              color: AppTheme.accent.withOpacity(0.4),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'No plans yet',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+            Text('No plans yet', style: AppTheme.subheading),
             const SizedBox(height: 10),
             Text(
               'No ${_levelLabel.toLowerCase()} plans found for ${widget.gender == 'female' ? 'women' : 'men'} yet.\nCheck back soon!',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.6,
-                color: Colors.white.withOpacity(0.5),
-              ),
+              style: AppTheme.body,
             ),
           ],
         ),
@@ -430,22 +392,20 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
   }
 }
 
-// ──────────────────────────────────────────────────────────────────
-// Muscle Group Card Widget
-// ──────────────────────────────────────────────────────────────────
+// ── Muscle Group Card ────────────────────────────────────────────────
 
 class _MuscleGroupCard extends StatefulWidget {
   final String name;
   final int exerciseCount;
   final IconData icon;
-  final List<Color> colors;
+  final Color accent;
   final VoidCallback onTap;
 
   const _MuscleGroupCard({
     required this.name,
     required this.exerciseCount,
     required this.icon,
-    required this.colors,
+    required this.accent,
     required this.onTap,
   });
 
@@ -489,125 +449,75 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
         builder: (_, child) =>
             Transform.scale(scale: _ctrl.value, child: child),
         child: Container(
-          height: 82,
+          height: 80,
           decoration: BoxDecoration(
+            color: AppTheme.surface,
             borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                widget.colors[0].withOpacity(0.18),
-                widget.colors[1].withOpacity(0.08),
-              ],
-            ),
-            border: Border.all(color: widget.colors[0].withOpacity(0.25)),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withOpacity(0.07),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: AppTheme.divider),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Stack(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                // Shine shimmer
-                Positioned(
-                  right: -20,
-                  top: -20,
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          widget.colors[0].withOpacity(0.2),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
+                // Icon container
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: widget.accent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(13),
                   ),
+                  child: Icon(widget.icon, color: widget.accent, size: 22),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
+                const SizedBox(width: 16),
+                // Text
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: widget.colors,
-                          ),
-                          borderRadius: BorderRadius.circular(13),
-                          boxShadow: [
-                            BoxShadow(
-                              color: widget.colors[0].withOpacity(0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(widget.icon, color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(width: 16),
-                      // Text
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: widget.colors[0],
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${widget.exerciseCount} exercises',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.white.withOpacity(0.55),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                      Text(
+                        widget.name,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.dark,
+                          letterSpacing: -0.1,
                         ),
                       ),
-                      // Arrow
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: widget.colors[0].withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(9),
-                          border: Border.all(
-                            color: widget.colors[0].withOpacity(0.25),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 13,
-                          color: widget.colors[0],
+                      const SizedBox(height: 3),
+                      Text(
+                        '${widget.exerciseCount} exercises',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
+                  ),
+                ),
+                // Arrow
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: widget.accent.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13,
+                    color: widget.accent,
                   ),
                 ),
               ],

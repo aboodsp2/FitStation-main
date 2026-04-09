@@ -615,10 +615,17 @@ class _SignInPageState extends State<SignInPage> {
                   ),
             const SizedBox(height: 15),
             GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardScreen()),
-              ),
+              onTap: () async {
+                try {
+                  await FirebaseAuth.instance.signInAnonymously();
+                } catch (_) {}
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  );
+                }
+              },
               child: const Text(
                 "Continue as Guest",
                 style: TextStyle(
