@@ -115,9 +115,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) =>
+        pageBuilder: (_, animation, _) =>
             TrainingPlanScreen(level: level, gender: _gender ?? 'male'),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
           opacity: animation,
           child: SlideTransition(
             position:
@@ -182,7 +182,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.08),
+            color: AppTheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -219,7 +219,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                 height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.accent.withOpacity(0.09),
+                  color: AppTheme.accent.withValues(alpha: 0.09),
                 ),
               ),
             ),
@@ -231,7 +231,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.primary.withOpacity(0.06),
+                  color: AppTheme.primary.withValues(alpha: 0.06),
                 ),
               ),
             ),
@@ -253,9 +253,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
+        color: AppTheme.accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -360,7 +360,7 @@ class _LevelCardState extends State<_LevelCard>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.08),
+                color: AppTheme.primary.withValues(alpha: 0.08),
                 blurRadius: 18,
                 offset: const Offset(0, 5),
               ),
@@ -380,7 +380,7 @@ class _LevelCardState extends State<_LevelCard>
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: widget.data.accent.withOpacity(0.08),
+                      color: widget.data.accent.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
@@ -394,7 +394,7 @@ class _LevelCardState extends State<_LevelCard>
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: widget.data.accent.withOpacity(0.12),
+                          color: widget.data.accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(
@@ -429,11 +429,11 @@ class _LevelCardState extends State<_LevelCard>
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: widget.data.accent.withOpacity(0.12),
+                                    color: widget.data.accent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
-                                      color: widget.data.accent.withOpacity(
-                                        0.3,
+                                      color: widget.data.accent.withValues(
+                                        alpha: 0.3,
                                       ),
                                     ),
                                   ),
@@ -479,10 +479,10 @@ class _LevelCardState extends State<_LevelCard>
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: widget.data.accent.withOpacity(0.10),
+                          color: widget.data.accent.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: widget.data.accent.withOpacity(0.25),
+                            color: widget.data.accent.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Icon(

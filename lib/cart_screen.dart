@@ -4,7 +4,6 @@ import 'dashboard_screen.dart';
 import 'supplement_models.dart';
 import 'supplement_store_screen.dart';
 import 'checkout_screen.dart';
-import 'my_orders_screen.dart';
 import 'auth_screen.dart' show GuestManager;
 import 'guest_preview_screen.dart' show showGuestSignupSheet;
 
@@ -94,7 +93,9 @@ class _CartScreenState extends State<CartScreen> {
             ),
             onPressed: () {
               final ids = CartManager().items.map((i) => i.id).toList();
-              for (final id in ids) CartManager().removeItem(id);
+              for (final id in ids) {
+                CartManager().removeItem(id);
+              }
               setState(() {
                 _promoApplied = false;
                 _promoError = false;
@@ -129,7 +130,9 @@ class _CartScreenState extends State<CartScreen> {
           cartItems: List.from(CartManager().items),
           onOrderPlaced: () {
             final ids = CartManager().items.map((i) => i.id).toList();
-            for (final id in ids) CartManager().removeItem(id);
+            for (final id in ids) {
+              CartManager().removeItem(id);
+            }
             setState(() {
               _promoApplied = false;
               _promoCtrl.clear();
@@ -249,7 +252,7 @@ class _CartScreenState extends State<CartScreen> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withOpacity(0.12),
+                      color: AppTheme.accent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -431,7 +434,7 @@ class _CartScreenState extends State<CartScreen> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                         elevation: 4,
-                        shadowColor: AppTheme.primary.withOpacity(0.35),
+                        shadowColor: AppTheme.primary.withValues(alpha: 0.35),
                       ),
                       onPressed: () => _checkout(total),
                       child: const Text(
@@ -495,7 +498,7 @@ class _CartItemTileState extends State<_CartItemTile> {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.08),
+              color: AppTheme.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
             ),
             child: ClipRRect(
@@ -564,7 +567,7 @@ class _CartItemTileState extends State<_CartItemTile> {
       width: 30,
       height: 30,
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
+        color: AppTheme.accent.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 16, color: AppTheme.primary),

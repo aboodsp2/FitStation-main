@@ -667,8 +667,8 @@ class _SignInPageState extends State<SignInPage> {
                       onChanged: (v) =>
                           setState(() => _rememberEmail = v ?? false),
                       checkColor: Colors.white,
-                      fillColor: MaterialStateProperty.resolveWith(
-                        (states) => states.contains(MaterialState.selected)
+                      fillColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
                             ? Colors.white30
                             : Colors.transparent,
                       ),
@@ -963,8 +963,7 @@ class _Input extends StatelessWidget {
     required this.icon,
     required this.hint,
     required this.controller,
-    this.keyboardType = TextInputType.text,
-  }) : isPass = false;
+  }) : keyboardType = TextInputType.text, isPass = false;
 
   @override
   Widget build(BuildContext context) => Padding(

@@ -94,7 +94,9 @@ class OrderManager {
   void addListener(VoidCallback l) => _listeners.add(l);
   void removeListener(VoidCallback l) => _listeners.remove(l);
   void _notify() {
-    for (final l in _listeners) l();
+    for (final l in _listeners) {
+      l();
+    }
   }
 
   void placeOrder(Order o) {
@@ -233,13 +235,13 @@ class MyOrdersScreen extends StatelessWidget {
           width: 100,
           height: 100,
           decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.08),
+            color: AppTheme.accent.withValues(alpha: 0.08),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.receipt_long_outlined,
             size: 48,
-            color: AppTheme.primary.withOpacity(0.4),
+            color: AppTheme.primary.withValues(alpha: 0.4),
           ),
         ),
         const SizedBox(height: 20),
@@ -265,7 +267,7 @@ class MyOrdersScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -362,7 +364,7 @@ class _OrderCard extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _statusColor(order.status).withOpacity(0.12),
+                      color: _statusColor(order.status).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -544,9 +546,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.12),
+        color: c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: c.withOpacity(0.3)),
+        border: Border.all(color: c.withValues(alpha: 0.3)),
       ),
       child: Text(
         _label(status),
@@ -736,7 +738,7 @@ class _OrderDetailScreen extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.12),
+                    color: Colors.red.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -850,7 +852,7 @@ class _ItemRow extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.1),
+              color: AppTheme.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(

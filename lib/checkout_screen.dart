@@ -758,7 +758,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.3),
+                      color: AppTheme.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -956,7 +956,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     elevation: 5,
-                    shadowColor: AppTheme.primary.withOpacity(0.4),
+                    shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                   ),
                   onPressed: _placing ? null : _placeOrder,
                   child: _placing
@@ -1027,7 +1027,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           boxShadow: sel
               ? [
                   BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.2),
+                    color: AppTheme.primary.withValues(alpha: 0.2),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1041,8 +1041,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               height: 44,
               decoration: BoxDecoration(
                 color: sel
-                    ? Colors.white.withOpacity(0.15)
-                    : AppTheme.accent.withOpacity(0.1),
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : AppTheme.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -1072,7 +1072,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       color: sel
-                          ? Colors.white.withOpacity(0.7)
+                          ? Colors.white.withValues(alpha: 0.7)
                           : AppTheme.muted,
                     ),
                   ),
@@ -1265,7 +1265,7 @@ class _OrderSuccessScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       elevation: 4,
-                      shadowColor: AppTheme.primary.withOpacity(0.35),
+                      shadowColor: AppTheme.primary.withValues(alpha: 0.35),
                     ),
                     onPressed: () =>
                         Navigator.of(context).popUntil((r) => r.isFirst),

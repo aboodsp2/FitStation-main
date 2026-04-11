@@ -210,7 +210,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                   color: AppTheme.accent,
                 ),
               ),
-        errorBuilder: (_, __, ___) => Icon(
+        errorBuilder: (_, _, _) => Icon(
           Icons.person_rounded,
           color: AppTheme.primary,
           size: size * .5,
@@ -233,14 +233,14 @@ class _ProfileSectionState extends State<ProfileSection> {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.accent.withOpacity(0.12),
+              color: AppTheme.accent.withValues(alpha: 0.12),
               border: Border.all(
-                color: AppTheme.accent.withOpacity(0.4),
+                color: AppTheme.accent.withValues(alpha: 0.4),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.18),
+                  color: AppTheme.primary.withValues(alpha: 0.18),
                   blurRadius: 22,
                   offset: const Offset(0, 7),
                 ),
@@ -307,7 +307,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -437,7 +437,7 @@ class _ProfileSectionState extends State<ProfileSection> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.12),
+            color: AppTheme.accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: AppTheme.primary, size: 18),
@@ -475,7 +475,7 @@ class _ProfileSectionState extends State<ProfileSection> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.12),
+            color: AppTheme.accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: AppTheme.primary, size: 18),

@@ -81,7 +81,7 @@ class AboutScreen extends StatelessWidget {
           Container(
             width: 38, height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.15),
+              color: AppTheme.accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(11),
             ),
             child: Icon(icon, color: AppTheme.primary, size: 19),
@@ -124,7 +124,7 @@ class AboutScreen extends StatelessWidget {
         Container(
           width: 42, height: 42,
           decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.12),
+            color: AppTheme.accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Icon(icon, color: AppTheme.primary, size: 20),

@@ -247,11 +247,12 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
             'phone': _phoneCtrl.text.trim(),
             'profileCompleted': true,
           });
-      if (mounted)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
         );
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -301,9 +302,9 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.accent.withOpacity(0.15),
+                color: AppTheme.accent.withValues(alpha: 0.15),
                 border: Border.all(
-                  color: AppTheme.accent.withOpacity(0.4),
+                  color: AppTheme.accent.withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
@@ -507,7 +508,7 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                   elevation: 4,
-                  shadowColor: AppTheme.primary.withOpacity(0.4),
+                  shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                 ),
                 onPressed: _submit,
                 child: const Text(

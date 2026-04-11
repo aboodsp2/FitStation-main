@@ -59,6 +59,7 @@ dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+  firebase_core: any
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -67,8 +68,8 @@ flutter:
   uses-material-design: true
   assets:
 
-
-    
+    - assets/
+    - assets/intro.mp4
     - assets/welcome_1.jpg     
     - assets/welcome_2.mp4     
     - assets/welcome_3.mp4
@@ -194,7 +195,20 @@ flutter:
     - assets/discount/6.jpg
     - assets/discount/7.jpg
 
- 
+    - assets/weight_loss_logo.jpg
+    - assets/muscle_gain_logo.jpg
+    - assets/maintain_weight_logo.jpg 
+    
+    - assets/Rest_logo/
+
+
+    - assets/Rest_meals/
+    - assets/Rest_meals/r1_meals/
+    - assets/Rest_meals/r2_meals/
+    - assets/Rest_meals/r3_meals/
+    - assets/Rest_meals/r4_meals/
+    - assets/Rest_meals/r5_meals/
+    - assets/Rest_meals/r6_meals/
 
     - assets/Mbeginner/arms/
     - assets/Mbeginner/back/
@@ -232,7 +246,9 @@ flutter:
     - assets/Fadv/core/
     - assets/Fadv/legs/
     - assets/Fadv/shoulders/
-
+    - assets/meals/maintain/
+    - assets/meals/weight_loss/
+    - assets/meals/muscle_gain/
 
 
 

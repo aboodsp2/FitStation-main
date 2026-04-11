@@ -45,7 +45,7 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
               width: _page == i ? 22 : 7, height: 7,
               margin: const EdgeInsets.symmetric(horizontal: 3),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(_page == i ? 0.95 : 0.35),
+                color: Colors.white.withValues(alpha: _page == i ? 0.95 : 0.35),
                 borderRadius: BorderRadius.circular(10),
               ),
             ))),

@@ -31,7 +31,7 @@ void showGuestSignupSheet(BuildContext context) {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.12),
+              color: AppTheme.accent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -137,7 +137,7 @@ Widget lockedOverlay(BuildContext context, {required Widget child}) {
           borderRadius: BorderRadius.circular(16),
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.background.withOpacity(0.55),
+              color: AppTheme.background.withValues(alpha: 0.55),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
@@ -186,7 +186,7 @@ PreferredSizeWidget guestAppBar(BuildContext context, String title) {
       icon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.08),
+          color: AppTheme.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(
@@ -284,9 +284,9 @@ class GuestTrainingPreview extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.10),
+              color: AppTheme.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -323,7 +323,7 @@ class GuestTrainingPreview extends StatelessWidget {
                     border: Border.all(color: AppTheme.divider),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.06),
+                        color: AppTheme.primary.withValues(alpha: 0.06),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -337,7 +337,7 @@ class GuestTrainingPreview extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: (level['accent'] as Color).withOpacity(0.12),
+                          color: (level['accent'] as Color).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(
@@ -370,11 +370,11 @@ class GuestTrainingPreview extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: (level['accent'] as Color)
-                                        .withOpacity(0.12),
+                                        .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(5),
                                     border: Border.all(
                                       color: (level['accent'] as Color)
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Text(
@@ -539,9 +539,9 @@ class GuestSupplementsPreview extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.10),
+              color: AppTheme.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -572,7 +572,7 @@ class GuestSupplementsPreview extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) => Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -626,7 +626,7 @@ class GuestSupplementsPreview extends StatelessWidget {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: AppTheme.accent.withOpacity(0.10),
+                                color: AppTheme.accent.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -672,7 +672,7 @@ class GuestSupplementsPreview extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.accent.withOpacity(0.12),
+                                    color: AppTheme.accent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -756,9 +756,9 @@ class GuestMealPreview extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.10),
+              color: AppTheme.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -812,7 +812,7 @@ class GuestMealPreview extends StatelessWidget {
                           border: Border.all(color: AppTheme.divider),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withOpacity(0.05),
+                              color: AppTheme.primary.withValues(alpha: 0.05),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -897,7 +897,7 @@ class GuestMealPreview extends StatelessWidget {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accent.withOpacity(0.10),
+                                  color: AppTheme.accent.withValues(alpha: 0.10),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
@@ -994,9 +994,9 @@ class GuestConsultationPreview extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.10),
+              color: AppTheme.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -1039,7 +1039,7 @@ class GuestConsultationPreview extends StatelessWidget {
                     border: Border.all(color: AppTheme.divider),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.05),
+                        color: AppTheme.primary.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -1053,7 +1053,7 @@ class GuestConsultationPreview extends StatelessWidget {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.12),
+                          color: AppTheme.accent.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -1242,7 +1242,7 @@ Widget _signUpCta(BuildContext context) {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.3),
+            color: AppTheme.primary.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

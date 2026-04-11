@@ -10,7 +10,6 @@ import 'supplement_store_screen.dart';
 import 'supplement_models.dart';
 import 'meal_plan_screen.dart';
 import 'consultation_screen.dart';
-import 'cart_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
 import 'my_orders_screen.dart';
@@ -29,7 +28,9 @@ class CartManager {
   void addListener(VoidCallback l) => _listeners.add(l);
   void removeListener(VoidCallback l) => _listeners.remove(l);
   void _notify() {
-    for (final l in _listeners) l();
+    for (final l in _listeners) {
+      l();
+    }
   }
 
   void addItem(CartItem item) {
@@ -158,15 +159,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Container(
           height: 72,
           decoration: BoxDecoration(
-            color: AppTheme.surface.withOpacity(0.75),
+            color: AppTheme.surface.withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(40),
             border: Border.all(
-              color: Colors.white.withOpacity(0.55),
+              color: Colors.white.withValues(alpha: 0.55),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.10),
+                color: AppTheme.primary.withValues(alpha: 0.10),
                 blurRadius: 24,
                 offset: const Offset(0, 6),
               ),
@@ -199,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: sel ? AppTheme.primary.withOpacity(0.13) : Colors.transparent,
+          color: sel ? AppTheme.primary.withValues(alpha: 0.13) : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -237,7 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: sel ? AppTheme.primary.withOpacity(0.13) : Colors.transparent,
+          color: sel ? AppTheme.primary.withValues(alpha: 0.13) : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -414,9 +415,9 @@ class _HomeTabState extends State<_HomeTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.12),
+                color: AppTheme.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.accent.withOpacity(0.35)),
+                border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
@@ -479,10 +480,10 @@ class _HomeTabState extends State<_HomeTab> {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.15),
+                  color: AppTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppTheme.accent.withOpacity(0.4),
+                    color: AppTheme.accent.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                 ),
@@ -555,15 +556,15 @@ class _HomeTabState extends State<_HomeTab> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withOpacity(0.15),
+                    color: AppTheme.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppTheme.accent.withOpacity(0.4),
+                      color: AppTheme.accent.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.15),
+                        color: AppTheme.primary.withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -575,7 +576,7 @@ class _HomeTabState extends State<_HomeTab> {
                         ? Image.network(
                             photoUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
+                            errorBuilder: (_, _, _) => Icon(
                               Icons.person_rounded,
                               color: AppTheme.primary,
                               size: 28,
@@ -607,11 +608,12 @@ class _HomeTabState extends State<_HomeTab> {
             GestureDetector(
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                if (ctx.mounted)
+                if (ctx.mounted) {
                   Navigator.of(ctx).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const AuthFlowHandler()),
                     (_) => false,
                   );
+                }
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -638,7 +640,7 @@ class _HomeTabState extends State<_HomeTab> {
       border: Border.all(color: AppTheme.divider),
       boxShadow: [
         BoxShadow(
-          color: AppTheme.primary.withOpacity(0.04),
+          color: AppTheme.primary.withValues(alpha: 0.04),
           blurRadius: 10,
           offset: const Offset(0, 3),
         ),
@@ -718,7 +720,7 @@ class _HomeTabState extends State<_HomeTab> {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withOpacity(0.3),
+                              color: AppTheme.primary.withValues(alpha: 0.3),
                               blurRadius: 18,
                               offset: const Offset(0, 7),
                             ),
@@ -733,7 +735,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 width: 140,
                                 height: 140,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.06),
+                                  color: Colors.white.withValues(alpha: 0.06),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -744,7 +746,7 @@ class _HomeTabState extends State<_HomeTab> {
                               child: Icon(
                                 b["icon"] as IconData,
                                 size: 60,
-                                color: Colors.white.withOpacity(0.10),
+                                color: Colors.white.withValues(alpha: 0.10),
                               ),
                             ),
                             Padding(
@@ -762,7 +764,7 @@ class _HomeTabState extends State<_HomeTab> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.18),
+                                      color: Colors.white.withValues(alpha: 0.18),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -789,7 +791,7 @@ class _HomeTabState extends State<_HomeTab> {
                                   Text(
                                     b["sub"] as String,
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.65),
+                                      color: Colors.white.withValues(alpha: 0.65),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -869,7 +871,7 @@ class _HomeTabState extends State<_HomeTab> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.35),
+                            color: AppTheme.primary.withValues(alpha: 0.35),
                             blurRadius: 18,
                             offset: const Offset(0, 7),
                           ),
@@ -884,7 +886,7 @@ class _HomeTabState extends State<_HomeTab> {
                               width: 140,
                               height: 140,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.06),
+                                color: Colors.white.withValues(alpha: 0.06),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -895,7 +897,7 @@ class _HomeTabState extends State<_HomeTab> {
                             child: Icon(
                               Icons.local_offer_rounded,
                               size: 60,
-                              color: Colors.white.withOpacity(0.10),
+                              color: Colors.white.withValues(alpha: 0.10),
                             ),
                           ),
                           Padding(
@@ -913,7 +915,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.18),
+                                    color: Colors.white.withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: const Text(
@@ -940,7 +942,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 Text(
                                   "${deals.length} discounted products",
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -995,7 +997,7 @@ class _HomeTabState extends State<_HomeTab> {
                   decoration: BoxDecoration(
                     color: _bannerIdx == i
                         ? AppTheme.primary
-                        : AppTheme.accent.withOpacity(0.3),
+                        : AppTheme.accent.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -1088,7 +1090,7 @@ class _HomeTabState extends State<_HomeTab> {
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: cols[0].withOpacity(0.4),
+                  color: cols[0].withValues(alpha: 0.4),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -1102,10 +1104,10 @@ class _HomeTabState extends State<_HomeTab> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.10),
+                    color: Colors.white.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(13),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                       width: 1,
                     ),
                   ),
@@ -1129,7 +1131,7 @@ class _HomeTabState extends State<_HomeTab> {
                 Text(
                   item["sub"] as String,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.48),
+                    color: Colors.white.withValues(alpha: 0.48),
                     fontSize: 12,
                   ),
                 ),
@@ -1139,7 +1141,7 @@ class _HomeTabState extends State<_HomeTab> {
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withOpacity(0.22),
+                      color: AppTheme.accent.withValues(alpha: 0.22),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

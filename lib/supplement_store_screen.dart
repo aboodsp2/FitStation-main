@@ -446,7 +446,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.3),
+            color: AppTheme.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -465,7 +465,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -735,7 +735,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                   width: double.infinity,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withOpacity(0.08),
+                      color: AppTheme.accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -758,7 +758,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.45),
+                        color: Colors.black.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Center(
@@ -935,7 +935,7 @@ class _SupplementStoreScreenState extends State<SupplementStoreScreen> {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.1),
+              color: AppTheme.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: item.imageUrl.isNotEmpty
@@ -1126,7 +1126,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
               height: 220,
               margin: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.08),
+                color: AppTheme.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: item.imageUrl.isNotEmpty
@@ -1199,7 +1199,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "${item.rating.toStringAsFixed(1)}",
+                        item.rating.toStringAsFixed(1),
                         style: AppTheme.subheading.copyWith(
                           fontSize: 13,
                           color: AppTheme.muted,
@@ -1328,8 +1328,8 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                     elevation: 4,
-                                    shadowColor: AppTheme.primary.withOpacity(
-                                      0.35,
+                                    shadowColor: AppTheme.primary.withValues(
+                                      alpha: 0.35,
                                     ),
                                   ),
                                   onPressed: () {
@@ -1367,7 +1367,7 @@ class _ProductDetailSheetState extends State<_ProductDetailSheet> {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
+        color: AppTheme.accent.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: AppTheme.primary, size: 18),
@@ -1394,7 +1394,9 @@ class _CategoryScreenState extends State<_CategoryScreen> {
     super.initState();
     CartManager().addListener(_onCart);
     _cartCount = CartManager().count;
-    for (final item in widget.allItems) _qtys[item.id] = 1;
+    for (final item in widget.allItems) {
+      _qtys[item.id] = 1;
+    }
   }
 
   @override
@@ -1512,7 +1514,7 @@ class _CategoryScreenState extends State<_CategoryScreen> {
               width: 110,
               height: 140,
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.08),
+                color: AppTheme.accent.withValues(alpha: 0.08),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(18),
                   bottomLeft: Radius.circular(18),
@@ -1668,10 +1670,11 @@ class _CategoryScreenState extends State<_CategoryScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _qtyBtn(Icons.remove, () {
-                                      if (qty > 1)
+                                      if (qty > 1) {
                                         setState(
                                           () => _qtys[item.id] = qty - 1,
                                         );
+                                      }
                                     }),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -1739,7 +1742,7 @@ class _CategoryScreenState extends State<_CategoryScreen> {
       width: 26,
       height: 26,
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
+        color: AppTheme.accent.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 14, color: AppTheme.primary),
@@ -1764,7 +1767,9 @@ class _DealsScreenState extends State<DealsScreen> {
     super.initState();
     CartManager().addListener(_onCart);
     _cartCount = CartManager().count;
-    for (final item in widget.deals) _qtys[item.id] = 1;
+    for (final item in widget.deals) {
+      _qtys[item.id] = 1;
+    }
   }
 
   @override
@@ -1885,7 +1890,7 @@ class _DealsScreenState extends State<DealsScreen> {
                           width: 110,
                           height: 140,
                           decoration: BoxDecoration(
-                            color: AppTheme.accent.withOpacity(0.08),
+                            color: AppTheme.accent.withValues(alpha: 0.08),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(18),
                               bottomLeft: Radius.circular(18),
@@ -2038,11 +2043,12 @@ class _DealsScreenState extends State<DealsScreen> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 _qtyBtn(Icons.remove, () {
-                                                  if (qty > 1)
+                                                  if (qty > 1) {
                                                     setState(
                                                       () => _qtys[item.id] =
                                                           qty - 1,
                                                     );
+                                                  }
                                                 }),
                                                 Padding(
                                                   padding:
@@ -2115,7 +2121,7 @@ class _DealsScreenState extends State<DealsScreen> {
       width: 26,
       height: 26,
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.12),
+        color: AppTheme.accent.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 14, color: AppTheme.primary),
@@ -2208,18 +2214,20 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
             .collection('supplements')
             .snapshots(),
         builder: (_, snap) {
-          if (!snap.hasData)
+          if (!snap.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: AppTheme.primary),
             );
+          }
           final items =
               snap.data!.docs.map(SupplementItem.fromFirestore).toList()
                 ..sort((a, b) => a.name.compareTo(b.name));
 
-          if (items.isEmpty)
+          if (items.isEmpty) {
             return Center(
               child: Text("No supplements in database.", style: AppTheme.body),
             );
+          }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -2236,7 +2244,7 @@ class _AllSupplementsScreenState extends State<_AllSupplementsScreen> {
                       width: 100,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppTheme.accent.withOpacity(0.08),
+                        color: AppTheme.accent.withValues(alpha: 0.08),
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(16),
                           bottomLeft: Radius.circular(16),

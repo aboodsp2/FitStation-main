@@ -160,7 +160,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.08),
+            color: AppTheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -214,7 +214,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
                   gradient: LinearGradient(
                     begin: Alignment.topRight,
                     end: Alignment.bottomLeft,
-                    colors: [_accent.withOpacity(0.12), AppTheme.background],
+                    colors: [_accent.withValues(alpha: 0.12), AppTheme.background],
                   ),
                 ),
               ),
@@ -228,7 +228,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
                 height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _accent.withOpacity(0.08),
+                  color: _accent.withValues(alpha: 0.08),
                 ),
               ),
             ),
@@ -246,7 +246,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: _accent.withOpacity(0.35),
+                      color: _accent.withValues(alpha: 0.35),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -375,7 +375,7 @@ class _TrainingPlanScreenState extends State<TrainingPlanScreen>
             Icon(
               Icons.fitness_center_rounded,
               size: 72,
-              color: AppTheme.accent.withOpacity(0.4),
+              color: AppTheme.accent.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 20),
             Text('No plans yet', style: AppTheme.subheading),
@@ -455,7 +455,7 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.07),
+                color: AppTheme.primary.withValues(alpha: 0.07),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               ),
@@ -471,7 +471,7 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: widget.accent.withOpacity(0.12),
+                    color: widget.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Icon(widget.icon, color: widget.accent, size: 22),
@@ -511,7 +511,7 @@ class _MuscleGroupCardState extends State<_MuscleGroupCard>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: widget.accent.withOpacity(0.10),
+                    color: widget.accent.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: Icon(

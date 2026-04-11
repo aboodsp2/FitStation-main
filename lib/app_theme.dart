@@ -34,8 +34,7 @@ class AppTheme {
     brightness: Brightness.light,
     scaffoldBackgroundColor: background,
     colorScheme: const ColorScheme.light(
-      primary: primary, secondary: accent,
-      background: background, surface: surface,
+      primary: primary, secondary: accent, surface: surface,
     ),
     textTheme: const TextTheme(
       displayLarge:   TextStyle(fontFamily: _f, fontWeight: FontWeight.w700),
@@ -62,7 +61,7 @@ class AppTheme {
 
   static BoxDecoration card({double radius = 20}) => BoxDecoration(
     color: surface, borderRadius: BorderRadius.circular(radius),
-    boxShadow: [BoxShadow(color: primary.withOpacity(0.07),
+    boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.07),
         blurRadius: 16, offset: const Offset(0, 5))],
   );
 

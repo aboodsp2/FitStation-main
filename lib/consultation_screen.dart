@@ -334,7 +334,9 @@ class _ConsultationScreenState extends State<ConsultationScreen>
       _selectedDate = null;
       _selectedTime = null;
       _slotAvailability = {};
+      _pinLocation = null;
     });
+    _mapCtrl?.animateCamera(CameraUpdate.newLatLng(_defaultLatLng));
   }
 
   @override
@@ -365,9 +367,22 @@ class _ConsultationScreenState extends State<ConsultationScreen>
           .collection('availability')
           .doc(_dateKey)
           .get();
+      const defaultWorking = [
+        '9:00 AM',
+        '10:00 AM',
+        '11:00 AM',
+        '2:00 PM',
+        '3:00 PM',
+        '4:00 PM',
+        '5:00 PM',
+      ];
       final Map<String, bool> result = {};
       for (final slot in _timeSlots) {
-        result[slot] = !(doc.exists && doc.data()?[slot] == false);
+        if (!doc.exists) {
+          result[slot] = defaultWorking.contains(slot);
+        } else {
+          result[slot] = doc.data()?[slot] != false;
+        }
       }
       if (mounted) {
         setState(() {
@@ -512,6 +527,7 @@ class _ConsultationScreenState extends State<ConsultationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg,

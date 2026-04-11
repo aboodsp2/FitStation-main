@@ -575,7 +575,7 @@ class ExerciseScreen extends StatelessWidget {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.08),
+              color: AppTheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -622,7 +622,7 @@ class ExerciseScreen extends StatelessWidget {
                   Icon(
                     Icons.fitness_center_rounded,
                     size: 64,
-                    color: AppTheme.accent.withOpacity(0.3),
+                    color: AppTheme.accent.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 16),
                   Text('No exercises yet', style: AppTheme.body),
@@ -732,7 +732,7 @@ class _ExerciseCardState extends State<_ExerciseCard> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.07),
+              color: AppTheme.primary.withValues(alpha: 0.07),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -771,11 +771,11 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                                 width: 54,
                                 height: 54,
                                 decoration: BoxDecoration(
-                                  color: widget.accent.withOpacity(0.9),
+                                  color: widget.accent.withValues(alpha: 0.9),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: widget.accent.withOpacity(0.35),
+                                      color: widget.accent.withValues(alpha: 0.35),
                                       blurRadius: 14,
                                     ),
                                   ],
@@ -795,7 +795,7 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: Colors.black.withValues(alpha: 0.4),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -815,10 +815,10 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                               width: 58,
                               height: 58,
                               decoration: BoxDecoration(
-                                color: widget.accent.withOpacity(0.1),
+                                color: widget.accent.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: widget.accent.withOpacity(0.4),
+                                  color: widget.accent.withValues(alpha: 0.4),
                                   width: 2,
                                 ),
                               ),
@@ -854,7 +854,7 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: widget.accent.withOpacity(0.12),
+                      color: widget.accent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -888,10 +888,10 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: widget.accent.withOpacity(0.1),
+                          color: widget.accent.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: widget.accent.withOpacity(0.2),
+                            color: widget.accent.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Icon(
@@ -908,10 +908,10 @@ class _ExerciseCardState extends State<_ExerciseCard> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: widget.accent.withOpacity(0.1),
+                          color: widget.accent.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: widget.accent.withOpacity(0.2),
+                            color: widget.accent.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Icon(
@@ -988,8 +988,9 @@ class _FullscreenVideoScreenState extends State<_FullscreenVideoScreen> {
 
   void _toggleControls() {
     setState(() => _showControls = !_showControls);
-    if (_showControls)
+    if (_showControls) {
       Future.delayed(const Duration(seconds: 3), _hideControls);
+    }
   }
 
   void _togglePlay() async {
@@ -1038,10 +1039,10 @@ class _FullscreenVideoScreenState extends State<_FullscreenVideoScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.55),
+                      Colors.black.withValues(alpha: 0.55),
                       Colors.transparent,
                       Colors.transparent,
-                      Colors.black.withOpacity(0.55),
+                      Colors.black.withValues(alpha: 0.55),
                     ],
                   ),
                 ),
@@ -1056,7 +1057,7 @@ class _FullscreenVideoScreenState extends State<_FullscreenVideoScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.45),
+                            color: Colors.black.withValues(alpha: 0.45),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -1095,11 +1096,11 @@ class _FullscreenVideoScreenState extends State<_FullscreenVideoScreen> {
                           width: 68,
                           height: 68,
                           decoration: BoxDecoration(
-                            color: widget.accentColor.withOpacity(0.9),
+                            color: widget.accentColor.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: widget.accentColor.withOpacity(0.4),
+                                color: widget.accentColor.withValues(alpha: 0.4),
                                 blurRadius: 20,
                               ),
                             ],

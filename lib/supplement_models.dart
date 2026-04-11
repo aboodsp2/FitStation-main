@@ -86,14 +86,14 @@ class SupplementImage extends StatelessWidget {
         ? Image.asset(
             imageUrl,
             fit: fit,
-            errorBuilder: (_, __, ___) =>
+            errorBuilder: (_, _, _) =>
                 Icon(Icons.science_rounded, color: AppTheme.accent, size: size),
           )
         : _isNetwork
         ? Image.network(
             imageUrl,
             fit: fit,
-            errorBuilder: (_, __, ___) =>
+            errorBuilder: (_, _, _) =>
                 Icon(Icons.science_rounded, color: AppTheme.accent, size: size),
           )
         : Icon(Icons.science_rounded, color: AppTheme.accent, size: size);
